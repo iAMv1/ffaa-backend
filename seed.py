@@ -104,26 +104,52 @@ def seed(db):
         status="pending",
         created_at=now,
     ))
+    # mark idx 2 as duplicate of idx 1
+    invoices[2].is_duplicate = True
+    invoices[2].duplicate_of = invoices[1].id
+    db.add(models.InvoiceItem(
+        invoice_id=invoices[1].id,
+        description="Cotton fabric roll",
+        hsn_code="5208",
+        quantity=100,
+        rate=482.0,
+        taxable_value=48200.0,
+        gst_rate=5.0,
+        cgst=2410.0,
+        sgst=2410.0,
+        igst=0.0,
+        line_total=53020.0,
+    ))
 
     for ci, ago, narration, debit, credit, rec in BANK_ROWS:
+        bal = round(credit - debit, 2)
+        inv_id = None
+        if ci == 0 and ago == 40:
+            inv_id = invoices[0].id
+        elif ci == 1 and ago == 33:
+            inv_id = invoices[7].id
+        elif ci == 2 and ago == 24:
+            inv_id = invoices[12].id
         db.add(models.BankStatement(
             client_id=clients[ci].id,
             date=date.today() - timedelta(days=ago),
             narration=narration,
             debit=debit,
             credit=credit,
-            balance=0.0,
+            balance=bal,
             reconciled=rec,
+            invoice_id=inv_id if rec else None,
             created_at=now,
         ))
 
     for ci, subject, status, ago, err in REMINDERS:
+        msg = "SMTP not configured (seed)" if status == "failed" and err and "SMTP" in err else err
         db.add(models.EmailReminder(
             client_id=clients[ci].id,
             subject=subject,
             body=f"Dear {clients[ci].name}, please share pending documents.",
             status=status,
-            error_message=err,
+            error_message=msg,
             sent_at=now - timedelta(days=ago) if status == "sent" else None,
             created_at=now - timedelta(days=ago),
         ))

@@ -53,3 +53,20 @@ def list_client_folders(client_name: str) -> dict:
                     f.name for f in cat_dir.iterdir() if f.is_file()
                 ]
     return tree
+
+
+def resolve_file_path(client_name: str, rel_path: str) -> Path | None:
+    """Resolve a relative path within client root. Block path traversal."""
+    try:
+        safe_client = _safe_name(client_name)
+        base = (CLIENT_ROOT / safe_client).resolve()
+        target = (base / rel_path).resolve()
+        try:
+            target.relative_to(base)
+        except ValueError:
+            return None
+        if target.exists() and target.is_file():
+            return target
+    except Exception:
+        return None
+    return None

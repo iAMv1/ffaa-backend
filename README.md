@@ -30,11 +30,21 @@ python -m uvicorn app.main:app --reload --port 8000
 
 API docs: http://localhost:8000/docs
 
+## OCR (PaddleOCR CPU)
+
+- Engine: `paddlepaddle==3.2.2` + `paddleocr` (no GPU, no EasyOCR/torch).
+- **Before any paddle import** (also set in `app/ocr.py` and Docker):
+  - `FLAGS_enable_pir_api=0`
+  - `FLAGS_use_mkldnn=0`
+- Lazy init: models load on **first** OCR call, not on `import app.main`.
+- First run downloads models (needs network once). Cache under user home / Paddle cache.
+- Invoice PDF: PyMuPDF render @ 200 DPI, max 20 pages, then OCR.
+- Probe: `python scripts/probe_paddle_ocr.py` (uses `tests/fixtures/sample_invoice.jpg`).
+
 ## Notes
 
 - SQLite is created as `ffaa.db` on first run.
 - Schema changes need `ffaa.db` delete or manual `ALTER TABLE` (no migrations yet).
-- EasyOCR cold start can take 20-30 seconds on first upload.
 - Client folders live under `FFAA_CLIENT_ROOT` (default `./data/clients`).
 
 ## Demo data

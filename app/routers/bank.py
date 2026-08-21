@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
 from sqlalchemy.orm import Session
 from datetime import datetime
 import os
-import shutil
 
 from .. import models, schemas
 from ..database import SessionLocal
@@ -25,6 +24,7 @@ def get_db():
 async def upload_bank(
     file: UploadFile = File(...),
     client_id: int = Query(...),
+    preview: bool = Query(False),
     db: Session = Depends(get_db),
 ):
     client = db.query(models.Client).filter(models.Client.id == client_id).first()
@@ -35,15 +35,37 @@ async def upload_bank(
     # ponytail: keep temp copy for hierarchy archive
     upload_dir = "uploads/bank_statements"
     os.makedirs(upload_dir, exist_ok=True)
+    safe_name = (
+        os.path.basename((file.filename or "bank").replace("\\", "/"))
+        .replace("..", "").replace("/", "").replace("\\", "").strip()
+        or "bank"
+    )
     temp_path = os.path.join(
-        upload_dir, f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{file.filename or 'bank'}"
+        upload_dir, f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{safe_name}"
     )
     with open(temp_path, "wb") as f:
         f.write(raw)
 
     parsed = parse_bank_file(file.filename or "bank.csv", raw)
     if not parsed:
+        try:
+            os.remove(temp_path)
+        except OSError:
+            pass
         raise HTTPException(status_code=400, detail="No rows parsed (CSV/PDF)")
+
+    if preview:
+        # return parsed rows without inserting — FE shows before committing
+        try:
+            os.remove(temp_path)
+        except OSError:
+            pass
+        rows = [schemas.BankStatementOut.model_validate({
+            "id": 0, "client_id": client_id, "date": r["date"], "narration": r["narration"],
+            "debit": r["debit"], "credit": r["credit"], "balance": r["balance"],
+            "reconciled": False, "file_path": None,
+        }) for r in parsed if r["date"]]
+        return {"imported": len(rows), "rows": rows, "preview": True}
 
     # ponytail: archive entire statement file once
     stmt_date = parsed[0]["date"] if parsed[0].get("date") else datetime.now().date()
@@ -62,7 +84,7 @@ async def upload_bank(
             narration=row["narration"],
             debit=row["debit"],
             credit=row["credit"],
-            balance=row["balance"],
+            balance=row.get("balance") or 0.0,
             file_path=archived,
             created_at=now,
         )
@@ -83,6 +105,64 @@ def list_bank(client_id: int | None = None, db: Session = Depends(get_db)):
     if client_id is not None:
         q = q.filter(models.BankStatement.client_id == client_id)
     return q.order_by(models.BankStatement.date.desc()).all()
+
+
+@router.delete("/bank-statements/{bank_id}")
+def delete_bank_statement(bank_id: int, db: Session = Depends(get_db)):
+    bs = db.query(models.BankStatement).filter(models.BankStatement.id == bank_id).first()
+    if not bs:
+        raise HTTPException(status_code=404, detail="Bank statement not found")
+    db.query(models.Reconciliation).filter(
+        models.Reconciliation.bank_statement_id == bank_id
+    ).delete()
+    db.delete(bs)
+    db.commit()
+    return {"deleted": bank_id}
+
+
+@router.get("/reconciliations", response_model=list[schemas.ReconciliationOut])
+def list_reconciliations(client_id: int | None = None, db: Session = Depends(get_db)):
+    q = (
+        db.query(
+            models.Reconciliation,
+            models.Invoice.invoice_number,
+            models.BankStatement.narration,
+            models.Invoice.total_amount,
+        )
+        .join(models.Invoice, models.Invoice.id == models.Reconciliation.invoice_id)
+        .join(
+            models.BankStatement,
+            models.BankStatement.id == models.Reconciliation.bank_statement_id,
+        )
+    )
+    if client_id is not None:
+        q = q.filter(models.Invoice.client_id == client_id)
+    out = []
+    for rec, inv_no, narr, amt in q.order_by(models.Reconciliation.created_at.desc()).all():
+        out.append(schemas.ReconciliationOut(
+            id=rec.id, invoice_id=rec.invoice_id, invoice_number=inv_no,
+            bank_statement_id=rec.bank_statement_id, narration=narr,
+            amount=amt, match_score=rec.match_score, matched_by=rec.matched_by,
+            confirmed=rec.confirmed, created_at=rec.created_at,
+        ))
+    return out
+
+
+@router.delete("/reconciliations/{recon_id}")
+def delete_reconciliation(recon_id: int, db: Session = Depends(get_db)):
+    """Undo a match: remove the reconciliation row and reopen the bank row
+    (bank row itself is kept)."""
+    rec = db.query(models.Reconciliation).filter(models.Reconciliation.id == recon_id).first()
+    if not rec:
+        raise HTTPException(status_code=404, detail="Reconciliation not found")
+    bs = db.query(models.BankStatement).filter(
+        models.BankStatement.id == rec.bank_statement_id).first()
+    if bs:
+        bs.reconciled = False
+        bs.invoice_id = None
+    db.delete(rec)
+    db.commit()
+    return {"deleted": recon_id}
 
 
 @router.post("/reconcile")

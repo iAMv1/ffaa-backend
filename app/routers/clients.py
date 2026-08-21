@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from datetime import datetime
+from fastapi.responses import FileResponse
 
 from .. import models, schemas
 from ..database import SessionLocal
-from ..folders import list_client_folders
+from ..folders import list_client_folders, resolve_file_path
 
 router = APIRouter()
 
@@ -33,16 +34,68 @@ def list_clients(skip: int = 0, limit: int = 100, db: Session = Depends(get_db))
 
 @router.put("/clients/{client_id}", response_model=schemas.ClientOut)
 def update_client(
-    client_id: int, client_update: schemas.ClientCreate, db: Session = Depends(get_db)
+    client_id: int, client_update: schemas.ClientUpdate, db: Session = Depends(get_db)
 ):
     client = db.query(models.Client).filter(models.Client.id == client_id).first()
     if not client:
         raise HTTPException(status_code=404, detail="Client not found")
-    for field, value in client_update.model_dump().items():
+    data = client_update.model_dump(exclude_unset=True)
+    new_name = data.get("name")
+    if new_name and new_name != client.name:
+        clash = db.query(models.Client).filter(
+            models.Client.name == new_name, models.Client.id != client_id
+        ).first()
+        if clash:
+            raise HTTPException(status_code=409, detail="Client name already exists")
+    for field, value in data.items():
         setattr(client, field, value)
     db.commit()
     db.refresh(client)
     return client
+
+
+def _chunks(ids: list, size: int = 900):
+    """SQLite IN-lists blow up past 999 bound vars — chunk them."""
+    for i in range(0, len(ids), size):
+        yield ids[i:i + size]
+
+
+@router.delete("/clients/{client_id}")
+def delete_client(client_id: int, db: Session = Depends(get_db)):
+    client = db.query(models.Client).filter(models.Client.id == client_id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+    inv_ids = [i.id for i in db.query(models.Invoice.id).filter(models.Invoice.client_id == client_id)]
+    if inv_ids:
+        # null duplicate_of on surviving invoices that point into the deleted set
+        for chunk in _chunks(inv_ids):
+            db.query(models.Invoice).filter(
+                models.Invoice.duplicate_of.in_(chunk)
+            ).update({models.Invoice.duplicate_of: None}, synchronize_session=False)
+        for chunk in _chunks(inv_ids):
+            db.query(models.InvoiceItem).filter(models.InvoiceItem.invoice_id.in_(chunk)).delete(
+                synchronize_session=False)
+            db.query(models.DuplicateFlag).filter(
+                (models.DuplicateFlag.invoice_id.in_(chunk))
+                | (models.DuplicateFlag.potential_duplicate_id.in_(chunk))
+            ).delete(synchronize_session=False)
+            db.query(models.Reconciliation).filter(
+                models.Reconciliation.invoice_id.in_(chunk)
+            ).delete(synchronize_session=False)
+        db.query(models.Invoice).filter(models.Invoice.client_id == client_id).delete(
+            synchronize_session=False)
+    bank_ids = [b.id for b in db.query(models.BankStatement.id).filter(models.BankStatement.client_id == client_id)]
+    if bank_ids:
+        for chunk in _chunks(bank_ids):
+            db.query(models.Reconciliation).filter(
+                models.Reconciliation.bank_statement_id.in_(chunk)
+            ).delete(synchronize_session=False)
+        db.query(models.BankStatement).filter(models.BankStatement.client_id == client_id).delete(
+            synchronize_session=False)
+    db.query(models.EmailReminder).filter(models.EmailReminder.client_id == client_id).delete()
+    db.delete(client)
+    db.commit()
+    return {"deleted": client_id}
 
 
 @router.get("/clients/{client_id}/folders")
@@ -51,3 +104,14 @@ def get_client_folders(client_id: int, db: Session = Depends(get_db)):
     if not client:
         raise HTTPException(status_code=404, detail="Client not found")
     return {"client": client.name, "folders": list_client_folders(client.name)}
+
+
+@router.get("/clients/{client_id}/files/{path:path}")
+def download_client_file(client_id: int, path: str, db: Session = Depends(get_db)):
+    client = db.query(models.Client).filter(models.Client.id == client_id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+    resolved = resolve_file_path(client.name, path)
+    if not resolved:
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(resolved, filename=resolved.name)

@@ -8,6 +8,23 @@ from .. import models, schemas
 from ..database import SessionLocal, engine
 from ..ocr import process_invoice_document
 from ..folders import archive_file
+from ..duplicates import find_duplicates
+from ..audit import audit_invoice
+
+
+def _out(inv) -> schemas.InvoiceOut:
+    o = schemas.InvoiceOut.model_validate(inv)
+    o.audit = audit_invoice(inv)
+    return o
+
+ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".pdf"}
+
+
+def _safe_filename(name: str) -> str:
+    """Keep only the basename; strip separators/dot-prefixes to block traversal."""
+    base = os.path.basename(name.replace("\\", "/"))
+    base = base.replace("..", "").replace("/", "").replace("\\", "").strip().lstrip(".")
+    return base or "invoice"
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -24,10 +41,15 @@ def _save_invoice(file: UploadFile, client_id: int | None, invoice_type: str, db
     if not file.filename:
         raise HTTPException(status_code=400, detail="No file provided")
 
+    ext = os.path.splitext(file.filename)[1].lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(status_code=400, detail=f"Unsupported file type: {ext}")
+
     upload_dir = "uploads/invoices"
     os.makedirs(upload_dir, exist_ok=True)
     file_path = os.path.join(
-        upload_dir, f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{file.filename}"
+        upload_dir,
+        f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{_safe_filename(file.filename)}",
     )
     with open(file_path, "wb") as f:
         shutil.copyfileobj(file.file, f)
@@ -83,6 +105,49 @@ def _save_invoice(file: UploadFile, client_id: int | None, invoice_type: str, db
     db.add(invoice)
     db.commit()
     db.refresh(invoice)
+
+    # InvoiceItem from OCR header fields (ponytail: single line for now)
+    if ocr_result.get("item_description") and (ocr_result.get("quantity") or ocr_result.get("taxable_value")):
+        line = models.InvoiceItem(
+            invoice_id=invoice.id,
+            description=ocr_result.get("item_description"),
+            hsn_code=ocr_result.get("hsn_code"),
+            quantity=ocr_result.get("quantity") or 1.0,
+            rate=ocr_result.get("taxable_value") / (ocr_result.get("quantity") or 1) if ocr_result.get("taxable_value") else 0.0,
+            taxable_value=ocr_result.get("taxable_value") or 0.0,
+            gst_rate=ocr_result.get("gst_rate") or 0.0,
+            cgst=ocr_result.get("cgst") or 0.0,
+            sgst=ocr_result.get("sgst") or 0.0,
+            igst=ocr_result.get("igst") or 0.0,
+            line_total=(ocr_result.get("taxable_value") or 0.0) + (ocr_result.get("cgst") or 0.0) + (ocr_result.get("sgst") or 0.0) + (ocr_result.get("igst") or 0.0),
+        )
+        db.add(line)
+
+    # auto duplicate check (ponytail: copy check_duplicates logic)
+    candidates = db.query(models.Invoice).filter(
+        models.Invoice.client_id == invoice.client_id,
+        models.Invoice.id != invoice.id,
+        models.Invoice.is_duplicate == False
+    ).all()
+    for other, score, fields in find_duplicates(invoice, candidates):
+        if score >= 80.0:
+            existing = db.query(models.DuplicateFlag).filter(
+                ((models.DuplicateFlag.invoice_id == invoice.id) & (models.DuplicateFlag.potential_duplicate_id == other.id))
+                | ((models.DuplicateFlag.invoice_id == other.id) & (models.DuplicateFlag.potential_duplicate_id == invoice.id))
+            ).first()
+            if not existing:
+                flag = models.DuplicateFlag(
+                    invoice_id=invoice.id,
+                    potential_duplicate_id=other.id,
+                    similarity_score=score,
+                    matched_fields=fields,
+                    status="pending",
+                    created_at=datetime.now(),
+                )
+                db.add(flag)
+
+    db.commit()
+    db.refresh(invoice)
     return invoice
 
 @router.post("/upload-invoice", response_model=schemas.InvoiceOut)
@@ -92,7 +157,12 @@ async def upload_invoice(
     invoice_type: str = Form("sales"),
     db: Session = Depends(get_db),
 ):
-    return _save_invoice(file, client_id, invoice_type, db)
+    try:
+        return _out(_save_invoice(file, client_id, invoice_type, db))
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)[:300])
 
 @router.post("/upload-invoices", response_model=list[schemas.UploadFileResult])
 async def upload_invoices_batch(
@@ -108,7 +178,7 @@ async def upload_invoices_batch(
             results.append(schemas.UploadFileResult(
                 filename=file.filename or "?",
                 status="ok",
-                invoice=schemas.InvoiceOut.model_validate(invoice),
+                invoice=_out(invoice),
             ))
         except Exception as e:
             db.rollback()
@@ -129,14 +199,14 @@ def list_invoices(
     q = db.query(models.Invoice)
     if client_id is not None:
         q = q.filter(models.Invoice.client_id == client_id)
-    return q.offset(skip).limit(limit).all()
+    return [_out(i) for i in q.offset(skip).limit(limit).all()]
 
 @router.get("/invoices/{invoice_id}", response_model=schemas.InvoiceOut)
 def get_invoice(invoice_id: int, db: Session = Depends(get_db)):
     invoice = db.query(models.Invoice).filter(models.Invoice.id == invoice_id).first()
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
-    return invoice
+    return _out(invoice)
 
 @router.put("/invoices/{invoice_id}/review", response_model=schemas.InvoiceOut)
 def review_invoice(
@@ -145,6 +215,8 @@ def review_invoice(
     invoice = db.query(models.Invoice).filter(models.Invoice.id == invoice_id).first()
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
+    if invoice.approved:
+        raise HTTPException(status_code=409, detail="Invoice already approved")
 
     invoice.invoice_number = invoice_update.invoice_number
     invoice.invoice_date = invoice_update.invoice_date
@@ -162,7 +234,7 @@ def review_invoice(
     invoice.reviewed_at = datetime.now()
     db.commit()
     db.refresh(invoice)
-    return invoice
+    return _out(invoice)
 
 @router.put("/invoices/{invoice_id}/approve", response_model=schemas.InvoiceOut)
 def approve_invoice(invoice_id: int, db: Session = Depends(get_db)):
@@ -172,15 +244,43 @@ def approve_invoice(invoice_id: int, db: Session = Depends(get_db)):
     if invoice.file_path:
         # ponytail: copy approved invoice to Final Books leaf
         doc_date = invoice.invoice_date or datetime.now().date()
-        archive_file(
-            invoice.file_path,
-            invoice.client.name,
-            doc_date,
-            "Final Books",
-            os.path.basename(invoice.file_path),
-        )
+        try:
+            archive_file(
+                invoice.file_path,
+                invoice.client.name,
+                doc_date,
+                "Final Books",
+                os.path.basename(invoice.file_path),
+            )
+        except Exception:
+            pass
     invoice.approved = True
     invoice.status = "approved"
     db.commit()
     db.refresh(invoice)
-    return invoice
+    return _out(invoice)
+
+
+@router.delete("/invoices/{invoice_id}")
+def delete_invoice(invoice_id: int, db: Session = Depends(get_db)):
+    invoice = db.query(models.Invoice).filter(models.Invoice.id == invoice_id).first()
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    # cascade: items, dupe flags (both directions), reconciliations, bank links
+    db.query(models.InvoiceItem).filter(models.InvoiceItem.invoice_id == invoice_id).delete()
+    db.query(models.DuplicateFlag).filter(
+        (models.DuplicateFlag.invoice_id == invoice_id)
+        | (models.DuplicateFlag.potential_duplicate_id == invoice_id)
+    ).delete()
+    db.query(models.Reconciliation).filter(
+        models.Reconciliation.invoice_id == invoice_id
+    ).delete()
+    db.query(models.Invoice).filter(
+        models.Invoice.duplicate_of == invoice_id
+    ).update({models.Invoice.duplicate_of: None}, synchronize_session=False)
+    for bs in db.query(models.BankStatement).filter(models.BankStatement.invoice_id == invoice_id):
+        bs.invoice_id = None
+        bs.reconciled = False
+    db.delete(invoice)
+    db.commit()
+    return {"deleted": invoice_id}

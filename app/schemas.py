@@ -11,6 +11,12 @@ class ClientBase(BaseModel):
 class ClientCreate(ClientBase):
     pass
 
+class ClientUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    gst_number: Optional[str] = None
+    address: Optional[str] = None
+
 class ClientOut(ClientBase):
     id: int
     class Config:
@@ -64,6 +70,7 @@ class InvoiceOut(InvoiceBase):
     is_duplicate: bool = False
     duplicate_of: Optional[int] = None
     items: List[InvoiceItemOut] = []
+    audit: Optional[dict] = None
     class Config:
         from_attributes = True
 
@@ -81,7 +88,24 @@ class BankStatementCreate(BankStatementBase):
 class BankStatementOut(BankStatementBase):
     id: int
     reconciled: bool
+    invoice_id: Optional[int] = None
     file_path: Optional[str] = None
+    balance: Optional[float] = None
+    class Config:
+        from_attributes = True
+
+
+class ReconciliationOut(BaseModel):
+    id: int
+    invoice_id: int
+    invoice_number: Optional[str] = None
+    bank_statement_id: int
+    narration: Optional[str] = None
+    amount: Optional[float] = None
+    match_score: float
+    matched_by: Optional[str] = None
+    confirmed: bool
+    created_at: Optional[datetime] = None
     class Config:
         from_attributes = True
 
@@ -144,6 +168,8 @@ class ReminderTemplate(BaseModel):
 class ReminderSend(BaseModel):
     template_name: Optional[str] = None
     custom_message: Optional[str] = None
+    days: Optional[int] = 30
+    send: bool = True
 
 
 class EmailReminderOut(BaseModel):

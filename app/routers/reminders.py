@@ -5,8 +5,8 @@ from datetime import datetime, timedelta
 
 from .. import models, schemas
 from ..database import SessionLocal
-from ..email_service import send_reminder
-from ..reminder_job import missing_docs, render
+from ..email_service import send_email
+from ..reminder_job import missing_docs, render as render_reminder
 
 router = APIRouter()
 
@@ -34,7 +34,7 @@ def reminder_preview(days: int = 30, db: Session = Depends(get_db)):
         last = max([d for d in (last_inv, last_bank) if d], default=None)
         if not docs:
             continue
-        subject, body = render(c.name, docs)
+        subject, body = render_reminder(c.name, docs)
         out.append({
             "client_id": c.id,
             "name": c.name,
@@ -57,13 +57,18 @@ def send_client_reminder(
     client = db.query(models.Client).filter(models.Client.id == client_id).first()
     if not client:
         raise HTTPException(status_code=404, detail="Client not found")
-    if not client.email:
-        raise HTTPException(status_code=400, detail="Client has no email")
+
+    days = send.days if send.days is not None else 30
+    since = datetime.now() - timedelta(days=days)
+    docs = missing_docs(db, client_id, since)
+    subject, body = render_reminder(client.name, docs)
+    if send.custom_message and send.custom_message.strip():
+        body = send.custom_message
 
     reminder = models.EmailReminder(
         client_id=client_id,
-        subject="",
-        body="",
+        subject=subject,
+        body=body,
         status="pending",
         created_at=datetime.now(),
     )
@@ -71,21 +76,24 @@ def send_client_reminder(
     db.commit()
     db.refresh(reminder)
 
-    try:
-        subject, body = send_reminder(client.email, client.name, send.template_name)
-        reminder.subject = subject
-        reminder.body = body
-        reminder.status = "sent"
-        reminder.sent_at = datetime.now()
-    except Exception as e:
-        reminder.status = "failed"
-        reminder.error_message = str(e)
+    if send.send:
+        if not client.email:
+            reminder.status = "failed"
+            reminder.error_message = "Client has no email"
+            db.commit()
+            db.refresh(reminder)
+            return reminder
+
+        try:
+            send_email(client.email, subject, body)
+            reminder.status = "sent"
+            reminder.sent_at = datetime.now()
+        except Exception as e:
+            reminder.status = "failed"
+            reminder.error_message = str(e)[:300]
         db.commit()
         db.refresh(reminder)
-        raise HTTPException(status_code=500, detail=str(e))
 
-    db.commit()
-    db.refresh(reminder)
     return reminder
 
 
@@ -95,6 +103,16 @@ def reminder_history(client_id: int | None = None, db: Session = Depends(get_db)
     if client_id is not None:
         q = q.filter(models.EmailReminder.client_id == client_id)
     return q.all()
+
+
+@router.delete("/reminders/{reminder_id}")
+def delete_reminder(reminder_id: int, db: Session = Depends(get_db)):
+    reminder = db.query(models.EmailReminder).filter(models.EmailReminder.id == reminder_id).first()
+    if not reminder:
+        raise HTTPException(status_code=404, detail="Reminder not found")
+    db.delete(reminder)
+    db.commit()
+    return {"deleted": reminder_id}
 
 
 @router.get("/reminders/templates", response_model=list[schemas.ReminderTemplate])
