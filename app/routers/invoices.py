@@ -9,8 +9,8 @@ from .. import models, schemas
 from ..database import SessionLocal
 from ..ocr import process_invoice_document
 from ..folders import archive_file
-from ..duplicates import find_duplicates
 from ..audit import audit_invoice
+from ..services import scan_and_flag_duplicates
 
 
 def _out(inv) -> schemas.InvoiceOut:
@@ -132,28 +132,8 @@ def _save_invoice(file: UploadFile, client_id: int | None, invoice_type: str, db
         )
         db.add(line)
 
-    # auto duplicate check (ponytail: copy check_duplicates logic)
-    candidates = db.query(models.Invoice).filter(
-        models.Invoice.client_id == invoice.client_id,
-        models.Invoice.id != invoice.id,
-        models.Invoice.is_duplicate == False
-    ).all()
-    for other, score, fields in find_duplicates(invoice, candidates):
-        if score >= 80.0:
-            existing = db.query(models.DuplicateFlag).filter(
-                ((models.DuplicateFlag.invoice_id == invoice.id) & (models.DuplicateFlag.potential_duplicate_id == other.id))
-                | ((models.DuplicateFlag.invoice_id == other.id) & (models.DuplicateFlag.potential_duplicate_id == invoice.id))
-            ).first()
-            if not existing:
-                flag = models.DuplicateFlag(
-                    invoice_id=invoice.id,
-                    potential_duplicate_id=other.id,
-                    similarity_score=score,
-                    matched_fields=fields,
-                    status="pending",
-                    created_at=datetime.now(),
-                )
-                db.add(flag)
+    # auto duplicate check — shared service (same rules as the re-scan endpoint)
+    scan_and_flag_duplicates(db, invoice)
 
     db.commit()
     db.refresh(invoice)

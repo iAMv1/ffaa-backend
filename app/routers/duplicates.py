@@ -4,7 +4,7 @@ from datetime import datetime
 
 from .. import models, schemas
 from ..database import SessionLocal
-from ..duplicates import find_duplicates
+from ..services import scan_and_flag_duplicates
 
 router = APIRouter()
 
@@ -23,43 +23,7 @@ def check_duplicates(invoice_id: int, db: Session = Depends(get_db)):
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
 
-    # ponytail: scan same-client invoices only
-    candidates = (
-        db.query(models.Invoice)
-        .filter(models.Invoice.client_id == invoice.client_id, models.Invoice.id != invoice.id)
-        .all()
-    )
-
-    matches = find_duplicates(invoice, candidates)
-    created = []
-    for other, score, fields in matches:
-        existing = (
-            db.query(models.DuplicateFlag)
-            .filter(
-                (
-                    (models.DuplicateFlag.invoice_id == invoice.id)
-                    & (models.DuplicateFlag.potential_duplicate_id == other.id)
-                )
-                | (
-                    (models.DuplicateFlag.invoice_id == other.id)
-                    & (models.DuplicateFlag.potential_duplicate_id == invoice.id)
-                )
-            )
-            .first()
-        )
-        if existing:
-            continue
-        flag = models.DuplicateFlag(
-            invoice_id=invoice.id,
-            potential_duplicate_id=other.id,
-            similarity_score=score,
-            matched_fields=fields,
-            status="pending",
-            created_at=datetime.now(),
-        )
-        db.add(flag)
-        created.append(flag)
-
+    created = scan_and_flag_duplicates(db, invoice)
     db.commit()
     for flag in created:
         db.refresh(flag)

@@ -5,8 +5,7 @@ from datetime import datetime, timedelta
 
 from .. import models, schemas
 from ..database import SessionLocal
-from ..email_service import send_email
-from ..reminder_job import missing_docs, render as render_reminder
+from ..services import attempt_reminder, missing_docs, render_reminder
 
 router = APIRouter()
 
@@ -59,42 +58,9 @@ def send_client_reminder(
         raise HTTPException(status_code=404, detail="Client not found")
 
     days = send.days if send.days is not None else 30
-    since = datetime.now() - timedelta(days=days)
-    docs = missing_docs(db, client_id, since)
-    subject, body = render_reminder(client.name, docs)
-    if send.custom_message and send.custom_message.strip():
-        body = send.custom_message
-
-    reminder = models.EmailReminder(
-        client_id=client_id,
-        subject=subject,
-        body=body,
-        status="pending",
-        created_at=datetime.now(),
+    return attempt_reminder(
+        db, client, days=days, send=send.send, custom_message=send.custom_message
     )
-    db.add(reminder)
-    db.commit()
-    db.refresh(reminder)
-
-    if send.send:
-        if not client.email:
-            reminder.status = "failed"
-            reminder.error_message = "Client has no email"
-            db.commit()
-            db.refresh(reminder)
-            return reminder
-
-        try:
-            send_email(client.email, subject, body)
-            reminder.status = "sent"
-            reminder.sent_at = datetime.now()
-        except Exception as e:
-            reminder.status = "failed"
-            reminder.error_message = str(e)[:300]
-        db.commit()
-        db.refresh(reminder)
-
-    return reminder
 
 
 @router.get("/reminders/history", response_model=list[schemas.EmailReminderOut])
