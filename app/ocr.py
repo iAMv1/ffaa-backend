@@ -2,6 +2,7 @@
 PDF text-layer fast path first. Shared extract_text for invoices + bank."""
 import os
 import re
+import shutil
 import tempfile
 import uuid
 from typing import Any, Dict
@@ -45,24 +46,30 @@ def _get_rapid_engine():
 
 
 def _rapid_words(image_path: str):
-    """RapidOCR result → [(text, x0, y0)]. Returns (words, ok)."""
+    """RapidOCR result → [(text, x0, y0)]. Returns (words, ok, mean_rec_score).
+    RapidOCR rows are [box, text, score] — the score is real recognizer
+    confidence, previously discarded (review F-12)."""
     result, _ = _get_rapid_engine()(image_path)
     if not result:
-        return [], False
+        return [], False, None
     words = [(ln[1], ln[0][0][0], ln[0][0][1]) for ln in result]
     words.sort(key=lambda w: (w[2], w[1]))
-    return words, True
+    scores = [float(ln[2]) for ln in result if len(ln) > 2 and ln[2] is not None]
+    mean_rec = round(sum(scores) / len(scores), 4) if scores else None
+    return words, True, mean_rec
 
 
 def extract_text(image_path: str) -> str:
     return extract_text_and_items(image_path)[0]
 
 
-def document_to_images(path: str) -> tuple[list[str], str | None]:
-    """PDF→page JPG paths; image→[path]. Returns (paths, warning)."""
+def document_to_images(path: str) -> tuple[list[str], str | None, str | None]:
+    """PDF→page JPG paths; image→[path].
+    Returns (paths, warning, tmpdir) — tmpdir is set for PDFs and MUST be
+    rmtree'd by the caller."""
     ext = os.path.splitext(path)[1].lower()
     if ext != ".pdf":
-        return [path], None
+        return [path], None, None
     doc = fitz.open(path)
     img_paths: list[str] = []
     warn = None
@@ -77,9 +84,7 @@ def document_to_images(path: str) -> tuple[list[str], str | None]:
         img_path = os.path.join(tmpdir, f"p{i}.jpg")
         pix.save(img_path, jpg_quality=85)
         img_paths.append(img_path)
-    doc.close()
-    return img_paths, warn
-
+    return img_paths, warn, tmpdir
 
 MAX_IMAGE_SIDE = 2200
 MIN_IMAGE_SIDE = 1200
@@ -372,11 +377,12 @@ def _ocr_words(result) -> list[tuple[str, float, float]]:
     return out
 
 
-def extract_text_and_items(image_path: str) -> tuple[str, list[dict]]:
+def extract_text_and_items(image_path: str) -> tuple[str, list[dict], float | None]:
     """RapidOCR primary (raw image — no binarize, it degrades INT8 models);
     paddle medium fallback when detection is thin or totals look wrong.
-    One OCR pass for both text and line items."""
-    words, ok = _rapid_words(image_path)
+    One OCR pass for both text and line items.
+    Returns (text, items, mean_rec_score|None). Cleans up its binarized temp copy."""
+    words, ok, rec_score = _rapid_words(image_path)
     text = "\n".join(w[0] for w in words)
 
     def _needs_fallback(txt):
@@ -399,14 +405,22 @@ def extract_text_and_items(image_path: str) -> tuple[str, list[dict]]:
 
     if _needs_fallback(text):
         engine = _get_ocr_engine()
-        result = engine.predict(preprocess_image(image_path))
+        processed = preprocess_image(image_path)
+        try:
+            result = engine.predict(processed)
+        finally:
+            try:
+                os.unlink(processed)  # binarized temp copy — leak fix (F-20)
+            except OSError:
+                pass
         # paddle fallback may return None/empty on unreadable input — keep rapid read
         fb_words = _ocr_words(result) if result else []
         if fb_words:
             words = fb_words
             text = "\n".join(w[0] for w in words)
+            rec_score = None  # fallback read: rapid score no longer describes this text
     items = _items_from_word_lines(_cluster_lines(words))
-    return text, items
+    return text, items, rec_score
 
 
 def parse_invoice_fields(text: str) -> Dict[str, Any]:
@@ -422,8 +436,7 @@ def parse_invoice_fields(text: str) -> Dict[str, Any]:
         "igst": None,
         "hsn_code": None,
         "quantity": None,
-        "item_description": None,
-        "confidence": 0.0,
+        "field_completeness": 0.0,
     }
     lines = text.splitlines()
 
@@ -731,8 +744,11 @@ def parse_invoice_fields(text: str) -> Dict[str, Any]:
         if total_qty:
             fields["quantity"] = round(total_qty, 2)
 
-    found = sum(1 for k, v in fields.items() if k != "confidence" and v is not None and v != 0.0)
-    fields["confidence"] = min(found / 10.0, 1.0)
+    # Field completeness = share of expected header fields found — NOT
+    # recognition certainty. Real recognizer score travels separately as
+    # fields["rec_score"] when OCR ran (review F-12).
+    found = sum(1 for k, v in fields.items() if k not in ("field_completeness", "rec_score") and v is not None and v != 0.0)
+    fields["field_completeness"] = min(found / 10.0, 1.0)
     return fields
 
 
@@ -763,22 +779,36 @@ def process_invoice_document(file_path: str) -> Dict[str, Any]:
                     fields["quantity"] = round(total_qty, 2)
             return fields
 
-    img_paths, warn = document_to_images(file_path)
+    img_paths, warn, tmpdir = document_to_images(file_path)
     parts: list[str] = []
     ocr_items: list[dict] = []
-    for p in img_paths:
-        try:
-            text, items = extract_text_and_items(p)
-            parts.append(text)
-            ocr_items.extend(items)
-        except ValueError:
-            parts.append("")  # unreadable page — degrade, don't re-raise
+    rec_scores: list[float] = []
+    unreadable = 0
+    try:
+        for p in img_paths:
+            try:
+                text, items, rec = extract_text_and_items(p)
+                parts.append(text)
+                ocr_items.extend(items)
+                if rec is not None:
+                    rec_scores.append(rec)
+            except ValueError:
+                # unreadable page — degrade, don't re-raise; surface it (was silent, F-20 round)
+                unreadable += 1
+                parts.append("")
+    finally:
+        if tmpdir:
+            shutil.rmtree(tmpdir, ignore_errors=True)  # page JPGs — leak fix (F-20)
     full_text = "\n\n".join(parts)
     if warn:
         full_text = (full_text + "\n\n" + warn).strip()
     fields = parse_invoice_fields(full_text)
     fields["raw_text"] = full_text
     fields["source"] = "ocr"
+    if rec_scores:
+        fields["rec_score"] = round(sum(rec_scores) / len(rec_scores), 4)
+    if unreadable:
+        fields["warnings"] = [f"{unreadable} page(s) could not be read"]
     if not ocr_items:
         ocr_items = parse_line_items(full_text)
     if ocr_items:

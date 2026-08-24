@@ -24,15 +24,37 @@ def scan_and_flag_duplicates(db: Session, invoice: models.Invoice) -> list[model
     Adds flags to the session WITHOUT committing; returns the new flags so
     callers can refresh/report after their own commit.
     """
-    candidates = (
-        db.query(models.Invoice)
-        .filter(
-            models.Invoice.client_id == invoice.client_id,
-            models.Invoice.id != invoice.id,
-            models.Invoice.is_duplicate == False,  # noqa: E712
+    # Scope candidates (F-19c): same client, not already a duplicate, and a
+    # plausible match — near-identical amount OR among the client's most
+    # recent invoices. Full-table scans went quadratic with history size.
+    amount = invoice.total_amount or 0.0
+    base = db.query(models.Invoice).filter(
+        models.Invoice.client_id == invoice.client_id,
+        models.Invoice.id != invoice.id,
+        models.Invoice.is_duplicate == False,  # noqa: E712
+    )
+    if amount > 0:
+        recent = (
+            base.filter(
+                models.Invoice.total_amount.between(amount * 0.9, amount * 1.1)
+            )
+            .order_by(models.Invoice.created_at.desc())
+            .limit(200)
+            .all()
         )
+    else:
+        recent = []
+    fallback = (
+        base.order_by(models.Invoice.created_at.desc())
+        .limit(50)
         .all()
     )
+    seen: set[int] = set()
+    candidates: list[models.Invoice] = []
+    for cand in recent + fallback:
+        if cand.id not in seen:
+            seen.add(cand.id)
+            candidates.append(cand)
     created: list[models.DuplicateFlag] = []
     for other, score, fields in find_duplicates(invoice, candidates):
         existing = (

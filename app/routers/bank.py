@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
 from sqlalchemy.orm import Session
 from datetime import datetime
@@ -8,6 +10,8 @@ from ..database import SessionLocal
 from ..bank_parse import parse_bank_file
 from ..reconcile import best_matches
 from ..folders import archive_file
+
+logger = logging.getLogger("ffaa.bank")
 
 router = APIRouter()
 
@@ -21,7 +25,9 @@ def get_db():
 
 
 @router.post("/bank-statements/upload")
-async def upload_bank(
+# Sync (not async): scanned-PDF parsing can OCR for minutes; `def` keeps the
+# event loop free (review F-18).
+def upload_bank(
     file: UploadFile = File(...),
     client_id: int = Query(...),
     preview: bool = Query(False),
@@ -30,7 +36,18 @@ async def upload_bank(
     client = db.query(models.Client).filter(models.Client.id == client_id).first()
     if not client:
         raise HTTPException(status_code=404, detail="Client not found")
-    raw = await file.read()
+    max_bytes = int(os.environ.get("MAX_FILE_SIZE_MB", "50")) * 1024 * 1024
+    if file.size is not None and file.size > max_bytes:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File exceeds MAX_FILE_SIZE_MB={os.environ.get('MAX_FILE_SIZE_MB', '50')}",
+        )
+    raw = file.file.read(max_bytes + 1)
+    if len(raw) > max_bytes:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File exceeds MAX_FILE_SIZE_MB={os.environ.get('MAX_FILE_SIZE_MB', '50')}",
+        )
 
     # ponytail: keep temp copy for hierarchy archive
     upload_dir = "uploads/bank_statements"

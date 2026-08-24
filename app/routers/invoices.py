@@ -1,7 +1,7 @@
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from datetime import datetime
 import os
 import shutil
@@ -68,8 +68,19 @@ def _save_invoice(file: UploadFile, client_id: int | None, invoice_type: str, db
         upload_dir,
         f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{_safe_filename(file.filename)}",
     )
+    max_bytes = int(os.environ.get("MAX_FILE_SIZE_MB", "50")) * 1024 * 1024
     with open(file_path, "wb") as f:
-        shutil.copyfileobj(file.file, f)
+        written = 0
+        while chunk := file.file.read(1024 * 1024):
+            written += len(chunk)
+            if written > max_bytes:
+                f.close()
+                os.remove(file_path)
+                raise HTTPException(
+                    status_code=413,
+                    detail=f"File exceeds MAX_FILE_SIZE_MB={os.environ.get('MAX_FILE_SIZE_MB', '50')}",
+                )
+            f.write(chunk)
 
     ocr_result = process_invoice_document(file_path)
 
@@ -105,9 +116,12 @@ def _save_invoice(file: UploadFile, client_id: int | None, invoice_type: str, db
         igst=ocr_result.get("igst") or 0.0,
         hsn_code=ocr_result.get("hsn_code"),
         quantity=ocr_result.get("quantity"),
-        item_description=ocr_result.get("item_description"),
+        # real recognizer score when OCR ran; completeness ratio otherwise
+        ocr_confidence=(
+            ocr_result["rec_score"] if ocr_result.get("rec_score") is not None
+            else ocr_result.get("field_completeness", 0.0)
+        ),
         invoice_type=invoice_type,
-        ocr_confidence=ocr_result.get("confidence", 0.0),
         file_path=archived,
         created_at=datetime.now(),
     )
@@ -140,7 +154,10 @@ def _save_invoice(file: UploadFile, client_id: int | None, invoice_type: str, db
     return invoice
 
 @router.post("/upload-invoice", response_model=schemas.InvoiceOut)
-async def upload_invoice(
+# Sync (not async): OCR runs minutes per file. FastAPI runs `def` handlers in
+# the threadpool, keeping the event loop free — async def would freeze every
+# other request during an upload (review F-18).
+def upload_invoice(
     file: UploadFile = File(...),
     client_id: int | None = Form(None),
     invoice_type: str = Form("sales"),
@@ -158,7 +175,7 @@ async def upload_invoice(
         )
 
 @router.post("/upload-invoices", response_model=list[schemas.UploadFileResult])
-async def upload_invoices_batch(
+def upload_invoices_batch(
     files: list[UploadFile] = File(...),
     client_id: int = Form(...),
     invoice_type: str = Form("sales"),
@@ -190,11 +207,13 @@ def list_invoices(
     limit: int = 100,
     db: Session = Depends(get_db),
 ):
-    q = db.query(models.Invoice)
+    q = (
+        db.query(models.Invoice)
+        .options(joinedload(models.Invoice.client))  # audit GSTIN fallback (F-19a)
+    )
     if client_id is not None:
         q = q.filter(models.Invoice.client_id == client_id)
     return [_out(i) for i in q.offset(skip).limit(limit).all()]
-
 @router.get("/invoices/{invoice_id}", response_model=schemas.InvoiceOut)
 def get_invoice(invoice_id: int, db: Session = Depends(get_db)):
     invoice = db.query(models.Invoice).filter(models.Invoice.id == invoice_id).first()

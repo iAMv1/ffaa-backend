@@ -21,18 +21,41 @@ def get_db():
 @router.get("/reminders/preview")
 def reminder_preview(days: int = 30, db: Session = Depends(get_db)):
     since = datetime.now() - timedelta(days=days)
+    # Grouped lookups instead of 4 queries per client (F-19b)
+    inv_counts = dict(
+        db.query(models.Invoice.client_id, func.count())
+        .filter(models.Invoice.created_at >= since)
+        .group_by(models.Invoice.client_id)
+        .all()
+    )
+    bank_counts = dict(
+        db.query(models.BankStatement.client_id, func.count())
+        .filter(models.BankStatement.created_at >= since)
+        .group_by(models.BankStatement.client_id)
+        .all()
+    )
+    last_inv = dict(
+        db.query(models.Invoice.client_id, func.max(models.Invoice.created_at))
+        .group_by(models.Invoice.client_id)
+        .all()
+    )
+    last_bank = dict(
+        db.query(models.BankStatement.client_id, func.max(models.BankStatement.created_at))
+        .group_by(models.BankStatement.client_id)
+        .all()
+    )
+
     out = []
     for c in db.query(models.Client).all():
-        docs = missing_docs(db, c.id, since)
-        last_inv = db.query(func.max(models.Invoice.created_at)).filter(
-            models.Invoice.client_id == c.id
-        ).scalar()
-        last_bank = db.query(func.max(models.BankStatement.created_at)).filter(
-            models.BankStatement.client_id == c.id
-        ).scalar()
-        last = max([d for d in (last_inv, last_bank) if d], default=None)
+        docs = []
+        if not inv_counts.get(c.id):
+            docs.append("Sales/Purchase invoices")
+        if not bank_counts.get(c.id):
+            docs.append("Bank statements")
         if not docs:
             continue
+        last_candidates = [d for d in (last_inv.get(c.id), last_bank.get(c.id)) if d]
+        last = max(last_candidates) if last_candidates else None
         subject, body = render_reminder(c.name, docs)
         out.append({
             "client_id": c.id,
