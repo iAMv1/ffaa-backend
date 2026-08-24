@@ -89,7 +89,7 @@ def _save_invoice(file: UploadFile, client_id: int | None, invoice_type: str, db
         company_name = ocr_result.get("company_name") or "Unknown"
         client = db.query(models.Client).filter(models.Client.name == company_name).first()
         if not client:
-            client = models.Client(name=company_name, created_at=datetime.now())
+            client = models.Client(name=company_name, auto_created=True, created_at=datetime.now())
             db.add(client)
             db.commit()
             db.refresh(client)

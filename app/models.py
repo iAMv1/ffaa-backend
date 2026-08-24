@@ -16,6 +16,7 @@ class Client(Base):
     email = Column(String(255), nullable=True)
     gst_number = Column(String(50), nullable=True)
     address = Column(Text, nullable=True)
+    auto_created = Column(Boolean, default=False)  # minted from OCR company name (ticket 03)
     created_at = Column(DateTime)
 
 class Invoice(Base):

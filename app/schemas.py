@@ -19,6 +19,7 @@ class ClientUpdate(BaseModel):
 
 class ClientOut(ClientBase):
     id: int
+    auto_created: bool = False
     model_config = ConfigDict(from_attributes=True)
 
 class InvoiceItemBase(BaseModel):
