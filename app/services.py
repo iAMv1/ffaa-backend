@@ -27,7 +27,7 @@ def scan_and_flag_duplicates(db: Session, invoice: models.Invoice) -> list[model
     # Scope candidates (F-19c): same client, not already a duplicate, and a
     # plausible match — near-identical amount OR among the client's most
     # recent invoices. Full-table scans went quadratic with history size.
-    amount = invoice.total_amount or 0.0
+    amount = float(invoice.total_amount or 0.0)  # Decimal → float for the window math
     base = db.query(models.Invoice).filter(
         models.Invoice.client_id == invoice.client_id,
         models.Invoice.id != invoice.id,

@@ -1,6 +1,13 @@
-from sqlalchemy import Column, Integer, String, Float, Date, DateTime, ForeignKey, Boolean, Text
+from decimal import Decimal
+
+from sqlalchemy import Column, Integer, String, Float, Numeric, Date, DateTime, ForeignKey, Boolean, Text
 from sqlalchemy.orm import relationship
 from .database import Base
+
+# Money is exact: Numeric(14,2) with Decimal at the ORM boundary.
+# Rates/quantities/scores stay Float — they are not currency.
+Money = Numeric(14, 2, asdecimal=True)
+_ZERO = Decimal("0.00")
 
 class Client(Base):
     __tablename__ = "clients"
@@ -19,11 +26,11 @@ class Invoice(Base):
     invoice_date = Column(Date)
     company_name = Column(String(255))
     gst_rate = Column(Float, default=0.0)
-    taxable_value = Column(Float, default=0.0)
-    total_amount = Column(Float, default=0.0)
-    cgst = Column(Float, default=0.0)
-    sgst = Column(Float, default=0.0)
-    igst = Column(Float, default=0.0)
+    taxable_value = Column(Money, default=_ZERO)
+    total_amount = Column(Money, default=_ZERO)
+    cgst = Column(Money, default=_ZERO)
+    sgst = Column(Money, default=_ZERO)
+    igst = Column(Money, default=_ZERO)
     hsn_code = Column(String(50), nullable=True)
     quantity = Column(Float, nullable=True)
     item_description = Column(Text, nullable=True)
@@ -48,13 +55,13 @@ class InvoiceItem(Base):
     description = Column(Text)
     hsn_code = Column(String(50), nullable=True)
     quantity = Column(Float)
-    rate = Column(Float)
-    taxable_value = Column(Float)
+    rate = Column(Money)
+    taxable_value = Column(Money)
     gst_rate = Column(Float, default=0.0)
-    cgst = Column(Float, default=0.0)
-    sgst = Column(Float, default=0.0)
-    igst = Column(Float, default=0.0)
-    line_total = Column(Float)
+    cgst = Column(Money, default=_ZERO)
+    sgst = Column(Money, default=_ZERO)
+    igst = Column(Money, default=_ZERO)
+    line_total = Column(Money)
 
     invoice = relationship("Invoice", back_populates="items")
 
@@ -64,9 +71,9 @@ class BankStatement(Base):
     client_id = Column(Integer, ForeignKey("clients.id"))
     date = Column(Date)
     narration = Column(Text)
-    debit = Column(Float, default=0.0)
-    credit = Column(Float, default=0.0)
-    balance = Column(Float, default=0.0)
+    debit = Column(Money, default=_ZERO)
+    credit = Column(Money, default=_ZERO)
+    balance = Column(Money, default=_ZERO)
     reconciled = Column(Boolean, default=False)
     invoice_id = Column(Integer, ForeignKey("invoices.id"), nullable=True)
     file_path = Column(String(500), nullable=True)  # ponytail: archived location

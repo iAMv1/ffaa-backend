@@ -17,7 +17,10 @@ def _field_score(a: str | None, b: str | None) -> float:
     return float(fuzz.ratio(_normalize(a), _normalize(b)))
 
 
-def _amount_score(a: float | None, b: float | None) -> float:
+def _amount_score(a, b) -> float:
+    # Money columns are Decimal now — score math stays in float space.
+    a = float(a) if a is not None else None
+    b = float(b) if b is not None else None
     if a is None or b is None:
         return 0.0
     if a == 0 and b == 0:

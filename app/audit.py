@@ -47,8 +47,11 @@ def audit_invoice(invoice) -> dict:
         client = getattr(invoice, "client", None)
         gstin = getattr(client, "gst_number", None) if client else None
     gstin_valid = validate_gstin(gstin) if gstin else None
+    # Money columns are Decimal — audit math stays in float space.
     math_ok, msg = math_check(
-        invoice.taxable_value or 0.0, invoice.cgst or 0.0, invoice.sgst or 0.0,
-        invoice.igst or 0.0, invoice.total_amount or 0.0, invoice.gst_rate,
+        float(invoice.taxable_value or 0.0),
+        float(invoice.cgst or 0.0), float(invoice.sgst or 0.0),
+        float(invoice.igst or 0.0), float(invoice.total_amount or 0.0),
+        invoice.gst_rate,
     )
     return {"gstin_valid": gstin_valid, "math_ok": math_ok, "message": msg}
