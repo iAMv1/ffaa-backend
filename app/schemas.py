@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 from datetime import date, datetime
 
@@ -19,8 +19,7 @@ class ClientUpdate(BaseModel):
 
 class ClientOut(ClientBase):
     id: int
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class InvoiceItemBase(BaseModel):
     description: str
@@ -39,8 +38,7 @@ class InvoiceItemCreate(InvoiceItemBase):
 
 class InvoiceItemOut(InvoiceItemBase):
     id: int
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class InvoiceBase(BaseModel):
     client_id: int
@@ -71,8 +69,7 @@ class InvoiceOut(InvoiceBase):
     duplicate_of: Optional[int] = None
     items: List[InvoiceItemOut] = []
     audit: Optional[dict] = None
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class BankStatementBase(BaseModel):
     client_id: int
@@ -91,8 +88,7 @@ class BankStatementOut(BankStatementBase):
     invoice_id: Optional[int] = None
     file_path: Optional[str] = None
     balance: Optional[float] = None
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ReconciliationOut(BaseModel):
@@ -106,8 +102,7 @@ class ReconciliationOut(BaseModel):
     matched_by: Optional[str] = None
     confirmed: bool
     created_at: Optional[datetime] = None
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class OCRResponse(BaseModel):
     invoice_number: Optional[str] = None
@@ -138,8 +133,7 @@ class DuplicateFlagOut(DuplicateFlagBase):
     id: int
     created_at: Optional[datetime] = None
     reviewed_at: Optional[datetime] = None
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DuplicateResolve(BaseModel):
@@ -181,5 +175,4 @@ class EmailReminderOut(BaseModel):
     error_message: Optional[str] = None
     sent_at: Optional[datetime] = None
     created_at: Optional[datetime] = None
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

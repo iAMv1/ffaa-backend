@@ -30,6 +30,14 @@ python -m uvicorn app.main:app --reload --port 8000
 
 API docs: http://localhost:8000/docs
 
+## Security posture
+
+FFAA is a **single-user, localhost-only tool**. Every endpoint is unauthenticated — including destructive ones
+(`DELETE /clients/{id}` cascades invoices, bank rows, flags, reminders) and outbound email (send-reminder).
+CORS is pinned to the vite dev origins, and the compose file publishes ports bound to `127.0.0.1` only.
+Do not expose FFAA ports beyond localhost; if you ever need remote access, put it behind an authenticating
+reverse proxy and add real auth first.
+
 ## OCR (PaddleOCR CPU)
 
 - Engine: `paddlepaddle==3.2.2` + `paddleocr` (no GPU, no EasyOCR/torch).

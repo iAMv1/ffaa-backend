@@ -1,0 +1,1 @@
+Archived 2026-08-24 after a full-repo review confirmed zero live references from `app/`; these OCR engine versions are superseded by the consolidated `app/ocr.py` (RapidOCR primary + gated Paddle fallback). The only logic never promoted was `_deskew` (minAreaRect page rotation), preserved in `ocr_v1.py:55-73` within this archive.

@@ -1,11 +1,12 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from datetime import datetime
 import os
 import shutil
-
 from .. import models, schemas
-from ..database import SessionLocal, engine
+from ..database import SessionLocal
 from ..ocr import process_invoice_document
 from ..folders import archive_file
 from ..duplicates import find_duplicates
@@ -26,7 +27,7 @@ def _safe_filename(name: str) -> str:
     base = base.replace("..", "").replace("/", "").replace("\\", "").strip().lstrip(".")
     return base or "invoice"
 
-models.Base.metadata.create_all(bind=engine)
+logger = logging.getLogger("ffaa.invoices")
 
 router = APIRouter()
 
@@ -36,6 +37,22 @@ def get_db():
         yield db
     finally:
         db.close()
+
+# Day-first precedence is deliberate: Indian invoices dominate the corpus.
+# Single source of truth for invoice date parsing — parsers return strings,
+# this helper owns format semantics.
+INVOICE_DATE_FORMATS = ("%d/%m/%Y", "%Y-%m-%d", "%d-%m-%Y", "%m/%d/%Y")
+
+
+def _parse_invoice_date(value: str | None):
+    if not value:
+        return None
+    for fmt in INVOICE_DATE_FORMATS:
+        try:
+            return datetime.strptime(value, fmt).date()
+        except ValueError:
+            continue
+    return None
 
 def _save_invoice(file: UploadFile, client_id: int | None, invoice_type: str, db: Session) -> models.Invoice:
     if not file.filename:
@@ -66,15 +83,7 @@ def _save_invoice(file: UploadFile, client_id: int | None, invoice_type: str, db
             db.commit()
             db.refresh(client)
 
-    invoice_date = None
-    invoice_date_str = ocr_result.get("invoice_date")
-    if invoice_date_str:
-        for fmt in ("%d/%m/%Y", "%Y-%m-%d", "%d-%m-%Y", "%m/%d/%Y"):
-            try:
-                invoice_date = datetime.strptime(invoice_date_str, fmt).date()
-                break
-            except ValueError:
-                continue
+    invoice_date = _parse_invoice_date(ocr_result.get("invoice_date"))
 
     # ponytail: archive to Client/Year/Month/{Sales,Purchase}/
     doc_date = invoice_date or datetime.now().date()
@@ -161,8 +170,12 @@ async def upload_invoice(
         return _out(_save_invoice(file, client_id, invoice_type, db))
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)[:300])
+    except Exception:
+        logger.exception("Invoice upload failed for %r", file.filename)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Processing failed for {file.filename!r}; see server logs.",
+        )
 
 @router.post("/upload-invoices", response_model=list[schemas.UploadFileResult])
 async def upload_invoices_batch(
@@ -181,11 +194,12 @@ async def upload_invoices_batch(
                 invoice=_out(invoice),
             ))
         except Exception as e:
+            logger.exception("Batch invoice upload failed for %r", file.filename)
             db.rollback()
             results.append(schemas.UploadFileResult(
                 filename=file.filename or "?",
                 status="failed",
-                error=str(e)[:300],
+                error=f"{type(e).__name__} while processing {file.filename!r} (details logged server-side)",
             ))
     return results
 
