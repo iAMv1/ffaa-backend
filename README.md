@@ -38,15 +38,21 @@ CORS is pinned to the vite dev origins, and the compose file publishes ports bou
 Do not expose FFAA ports beyond localhost; if you ever need remote access, put it behind an authenticating
 reverse proxy and add real auth first.
 
-## OCR (PaddleOCR CPU)
+## OCR (RapidOCR primary, PaddleOCR fallback)
 
-- Engine: `paddlepaddle==3.2.2` + `paddleocr` (no GPU, no EasyOCR/torch).
-- **Before any paddle import** (also set in `app/ocr.py` and Docker):
-  - `FLAGS_enable_pir_api=0`
-  - `FLAGS_use_mkldnn=0`
-- Lazy init: models load on **first** OCR call, not on `import app.main`.
-- First run downloads models (needs network once). Cache under user home / Paddle cache.
-- Invoice PDF: PyMuPDF render @ 200 DPI, max 20 pages, then OCR.
+Promoted architecture (see `app/ocr.py` docstring + `bench/PROGRESS.md` for measured numbers):
+
+- **Born-digital PDFs**: PyMuPDF text layer directly — no OCR at all (fast path).
+- **Images / scanned PDFs**: **RapidOCR** (ONNX INT8, CPU) on the RAW image — no binarization
+  (it degrades INT8). Measured: kirana corpus 50/50 totals @ ~6.9 s avg vs paddle-only 0/50 @ 84 s.
+- **Conditional fallback**: PaddleOCR v6-medium runs only when the rapid read is thin — empty
+  result; <25 words and no total; a TOTAL label present but no total parsed; or GST rate > 0 with
+  total ≈ taxable. Fallback runs on a CLAHE+Otsu binarized copy.
+- Parser v2: Indian total rules (GRAND TOTAL → in-words marker → line-start TOTAL → SUBTOTAL),
+  supplier/buyer disambiguation, zone-based line items from word coordinates.
+- Invoice PDF render: PyMuPDF @ 200 DPI, max 20 pages.
+- Paddle flags (`FLAGS_enable_pir_api=0`, `FLAGS_use_mkldnn=0`) set in `app/ocr.py`, Dockerfile,
+  compose, `.env.example`; models lazy-init on first OCR call (first run downloads once).
 - Probe: `python scripts/probe_paddle_ocr.py` (uses `tests/fixtures/sample_invoice.jpg`).
 
 ## Notes
