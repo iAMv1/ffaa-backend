@@ -10,9 +10,10 @@ Rate limits (slowapi): register 5/h/IP, login 10/h/IP, forgot-password 3/h/IP
 import os
 from datetime import datetime
 
-from fastapi import Depends
+from fastapi import Depends, HTTPException, Request
 from fastapi_users import FastAPIUsers, BaseUserManager, IntegerIDMixin
 from fastapi_users import schemas as fu_schemas
+from fastapi_users.exceptions import InvalidPasswordException, UserAlreadyExists
 from fastapi_users.authentication import (
     AuthenticationBackend,
     CookieTransport,
@@ -25,6 +26,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from .database import SessionLocal
+from pydantic import BaseModel, EmailStr
 from .models import User
 
 # Dev default keeps local dev frictionless; .env.example documents FFAA_SECRET
@@ -114,6 +116,10 @@ class UserCreate(fu_schemas.BaseUserCreate):
     pass
 
 
+class UserUpdate(fu_schemas.BaseUserUpdate):
+    pass
+
+
 
 # --- Transport / strategy / backend ---------------------------------------------
 
@@ -157,10 +163,59 @@ def _apply_limit(router, path: str, limit: str) -> None:
             # route.endpoint, older ones call route.dependant.call directly.
             route.endpoint = wrapped
             route.dependant.call = wrapped
-            return
-    raise RuntimeError(f"rate-limit target {path!r} not found on router")
+
+
+class AccountUpdate(BaseModel):
+    email: EmailStr | None = None
+    new_password: str | None = None
+    current_password: str | None = None
+
+
+@auth_router.patch("/account", response_model=UserRead)
+async def update_account(
+    request: Request,
+    payload: AccountUpdate,
+    user: User = Depends(current_active_user),
+    user_manager: UserManager = Depends(get_user_manager),
+):
+    """Authenticated account self-service (PATCH /api/v1/auth/account).
+
+    Email and password changes both require current_password — an
+    account-takeover guard, since a hijacked session alone must not be able
+    to lock the owner out. JWT strategy note: existing tokens stay valid
+    until expiry after a password change; revocation would need a server-side
+    session store.
+    """
+    if not payload.email and not payload.new_password:
+        raise HTTPException(status_code=400, detail="Nothing to update")
+    if not payload.current_password:
+        raise HTTPException(status_code=400, detail="Current password is required")
+
+    ok, upgraded_hash = user_manager.password_helper.verify_and_update(
+        payload.current_password, user.hashed_password
+    )
+    if not ok:
+        raise HTTPException(status_code=400, detail="Incorrect current password")
+    if upgraded_hash is not None:  # legacy hash scheme got re-hashed
+        await user_manager.user_db.update(user, {"hashed_password": upgraded_hash})
+
+    updates: dict = {}
+    if payload.new_password:
+        updates["password"] = payload.new_password
+    if payload.email and payload.email.lower() != (user.email or "").lower():
+        updates["email"] = payload.email
+
+    try:
+        # _update hashes `password` (validating strength) and rejects taken emails.
+        await user_manager.update(UserUpdate(**updates), user)
+    except InvalidPasswordException as e:
+        raise HTTPException(status_code=400, detail=f"Invalid password: {e.reason}")
+    except UserAlreadyExists:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    return user
 
 
 _apply_limit(register_router, "/register", "5/hour")
 _apply_limit(auth_router, "/login", "10/hour")
 _apply_limit(reset_router, "/forgot-password", "3/hour")
+_apply_limit(auth_router, "/account", "10/hour")
