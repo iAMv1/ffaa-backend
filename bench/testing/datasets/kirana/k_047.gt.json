@@ -1,0 +1,114 @@
+{
+ "invoice_number": "INV/2025-26/12234",
+ "supplier": "Marico Limited",
+ "date": "2025-02-03",
+ "items": [
+  {
+   "product_raw": "BAJAJ ALMD 100ML",
+   "quantity": 35,
+   "unit_price": 296.25,
+   "gst_rate": 18,
+   "line_total": 12235.12
+  },
+  {
+   "product_raw": "AMUL GHEE 1L",
+   "quantity": 48,
+   "unit_price": 269.92,
+   "gst_rate": 12,
+   "line_total": 14510.9
+  },
+  {
+   "product_raw": "Dove Beauty Bar 100g",
+   "quantity": 8,
+   "unit_price": 259.77,
+   "gst_rate": 18,
+   "line_total": 2452.23
+  },
+  {
+   "product_raw": "Lizol Disinfectant Floor Cleaner 500ml",
+   "quantity": 15,
+   "unit_price": 369.5,
+   "gst_rate": 18,
+   "line_total": 6540.15
+  },
+  {
+   "product_raw": "DETTOL HAND WASH 250",
+   "quantity": 19,
+   "unit_price": 99.07,
+   "gst_rate": 18,
+   "line_total": 2221.15
+  },
+  {
+   "product_raw": "Thums Up 600ml",
+   "quantity": 44,
+   "unit_price": 206.53,
+   "gst_rate": 28,
+   "line_total": 11631.77
+  },
+  {
+   "product_raw": "Fanta Orange 250ml",
+   "quantity": 8,
+   "unit_price": 31.02,
+   "gst_rate": 28,
+   "line_total": 317.64
+  },
+  {
+   "product_raw": "LIFEBUOY HW 250ML",
+   "quantity": 6,
+   "unit_price": 426.5,
+   "gst_rate": 18,
+   "line_total": 3019.62
+  },
+  {
+   "product_raw": "LMC 600ML",
+   "quantity": 21,
+   "unit_price": 95.6,
+   "gst_rate": 28,
+   "line_total": 2569.73
+  },
+  {
+   "product_raw": "GOODDAY BUTTR 150",
+   "quantity": 11,
+   "unit_price": 473.49,
+   "gst_rate": 18,
+   "line_total": 6145.9
+  },
+  {
+   "product_raw": "SURF 1KG",
+   "quantity": 4,
+   "unit_price": 332.06,
+   "gst_rate": 18,
+   "line_total": 1567.32
+  },
+  {
+   "product_raw": "HARPIC PP 500ML",
+   "quantity": 48,
+   "unit_price": 138.43,
+   "gst_rate": 18,
+   "line_total": 7840.68
+  },
+  {
+   "product_raw": "DOVE SHP 180ML",
+   "quantity": 15,
+   "unit_price": 117.08,
+   "gst_rate": 18,
+   "line_total": 2072.32
+  },
+  {
+   "product_raw": "MD PANEER 200G",
+   "quantity": 4,
+   "unit_price": 434.75,
+   "gst_rate": 5,
+   "line_total": 1825.95
+  },
+  {
+   "product_raw": "BAJAJ ALMD 100ML",
+   "quantity": 35,
+   "unit_price": 296.25,
+   "gst_rate": 18,
+   "line_total": 12235.12
+  }
+ ],
+ "grand_total": 87185.6,
+ "extraction_warnings": []
+}

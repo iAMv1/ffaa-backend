@@ -1,0 +1,100 @@
+{
+ "invoice_number": "INV/2024-25/14848",
+ "supplier": "Parle Products Pvt Ltd",
+ "date": "2024-11-25",
+ "items": [
+  {
+   "product_raw": "LUX 100G",
+   "quantity": 50,
+   "unit_price": 374.22,
+   "gst_rate": 18,
+   "line_total": 22078.98
+  },
+  {
+   "product_raw": "PARLE G 500G",
+   "quantity": 10,
+   "unit_price": 11.01,
+   "gst_rate": 18,
+   "line_total": 129.92
+  },
+  {
+   "product_raw": "Lifebuoy Total Handwash Refill 750ml",
+   "quantity": 35,
+   "unit_price": 171.51,
+   "gst_rate": 18,
+   "line_total": 7083.36
+  },
+  {
+   "product_raw": "AMUL BUTTER 500",
+   "quantity": 22,
+   "unit_price": 8.69,
+   "gst_rate": 12,
+   "line_total": 214.12
+  },
+  {
+   "product_raw": "SF MATIC 1KG",
+   "quantity": 7,
+   "unit_price": 104.85,
+   "gst_rate": 18,
+   "line_total": 866.06
+  },
+  {
+   "product_raw": "FOGG 120ML",
+   "quantity": 32,
+   "unit_price": 461.68,
+   "gst_rate": 18,
+   "line_total": 17433.04
+  },
+  {
+   "product_raw": "RIN B 250G",
+   "quantity": 46,
+   "unit_price": 158.95,
+   "gst_rate": 18,
+   "line_total": 8627.81
+  },
+  {
+   "product_raw": "Brooke Bond Red Label Tea 500g",
+   "quantity": 45,
+   "unit_price": 430.71,
+   "gst_rate": 5,
+   "line_total": 20351.05
+  },
+  {
+   "product_raw": "Pepsi 600ml",
+   "quantity": 38,
+   "unit_price": 64.95,
+   "gst_rate": 28,
+   "line_total": 3159.17
+  },
+  {
+   "product_raw": "MD PANEER 200G",
+   "quantity": 38,
+   "unit_price": 276.01,
+   "gst_rate": 5,
+   "line_total": 11012.8
+  },
+  {
+   "product_raw": "LIFEBUY 100G",
+   "quantity": 16,
+   "unit_price": 145.67,
+   "gst_rate": 18,
+   "line_total": 2750.25
+  },
+  {
+   "product_raw": "TRESEMME SHP 185",
+   "quantity": 45,
+   "unit_price": 400.66,
+   "gst_rate": 18,
+   "line_total": 21275.05
+  },
+  {
+   "product_raw": "GODREJ NO1 100G",
+   "quantity": 18,
+   "unit_price": 118.26,
+   "gst_rate": 18,
+   "line_total": 2511.84
+  }
+ ],
+ "grand_total": 117493.44,
+ "extraction_warnings": []
+}

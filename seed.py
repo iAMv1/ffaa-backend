@@ -65,7 +65,8 @@ def seed(db):
     now = datetime.now()
     clients = []
     for c in CLIENTS:
-        client = models.Client(**c, created_at=now)
+        # Operator account is id 1 (scripts/migrate_multi_tenant.py creates it).
+        client = models.Client(**c, owner_id=1, created_at=now)
         db.add(client)
         clients.append(client)
     db.commit()

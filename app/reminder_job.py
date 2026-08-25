@@ -27,7 +27,15 @@ def main() -> None:
     db = SessionLocal()
     sent = failed = skipped = 0
     try:
-        clients = db.query(models.Client).all()
+        # Skip tenants whose owner account is deactivated.
+        # TODO(P4): gate on active plan — skip free-expired tenants here too
+        # (plan rev #4). Global SMTP stays v1; per-user SMTP deferred.
+        clients = (
+            db.query(models.Client)
+            .join(models.User, models.User.id == models.Client.owner_id)
+            .filter(models.User.is_active == True)  # noqa: E712
+            .all()
+        )
         for c in clients:
             docs = missing_docs(db, c.id, since)
             if not docs:

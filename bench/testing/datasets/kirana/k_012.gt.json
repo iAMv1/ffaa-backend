@@ -1,0 +1,93 @@
+{
+ "invoice_number": "GST/2025-26/70587",
+ "supplier": "ITC Limited",
+ "date": "2024-04-06",
+ "items": [
+  {
+   "product_raw": "Head & Shoulders Cool Menthol Shampoo 200ml",
+   "quantity": 27,
+   "unit_price": 22.96,
+   "gst_rate": 18,
+   "line_total": 731.51
+  },
+  {
+   "product_raw": "TRESM SHMP 185ML",
+   "quantity": 47,
+   "unit_price": 198.45,
+   "gst_rate": 18,
+   "line_total": 11006.04
+  },
+  {
+   "product_raw": "Amul Cheese Slices 200g",
+   "quantity": 28,
+   "unit_price": 406.09,
+   "gst_rate": 12,
+   "line_total": 12734.98
+  },
+  {
+   "product_raw": "HARPIC PP 1L",
+   "quantity": 11,
+   "unit_price": 291.07,
+   "gst_rate": 18,
+   "line_total": 3778.09
+  },
+  {
+   "product_raw": "GD DAY CHOCO 75G",
+   "quantity": 7,
+   "unit_price": 415.19,
+   "gst_rate": 18,
+   "line_total": 3429.47
+  },
+  {
+   "product_raw": "HPC 10X 500",
+   "quantity": 13,
+   "unit_price": 240.22,
+   "gst_rate": 18,
+   "line_total": 3684.97
+  },
+  {
+   "product_raw": "MAAZA 600ML",
+   "quantity": 44,
+   "unit_price": 56.36,
+   "gst_rate": 12,
+   "line_total": 2777.42
+  },
+  {
+   "product_raw": "NSCFE CLS 100G",
+   "quantity": 16,
+   "unit_price": 243.16,
+   "gst_rate": 5,
+   "line_total": 4085.09
+  },
+  {
+   "product_raw": "Bru Gold Premium Coffee 50g",
+   "quantity": 1,
+   "unit_price": 165.87,
+   "gst_rate": 5,
+   "line_total": 174.16
+  },
+  {
+   "product_raw": "LMC 250ML",
+   "quantity": 32,
+   "unit_price": 281.18,
+   "gst_rate": 28,
+   "line_total": 11517.13
+  },
+  {
+   "product_raw": "SLC 600ML",
+   "quantity": 42,
+   "unit_price": 179.51,
+   "gst_rate": 12,
+   "line_total": 8444.15
+  },
+  {
+   "product_raw": "SHAKTI BHOG 5KG",
+   "quantity": 18,
+   "unit_price": 31.86,
+   "gst_rate": 5,
+   "line_total": 602.15
+  }
+ ],
+ "grand_total": 62965.17,
+ "extraction_warnings": []
+}

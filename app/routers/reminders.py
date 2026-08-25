@@ -6,6 +6,8 @@ from datetime import datetime, timedelta
 from .. import models, schemas
 from ..database import SessionLocal
 from ..services import attempt_reminder, missing_docs, render_reminder
+from ..tenancy import get_owned_client, require_entitlement
+from ..users import current_active_user
 
 router = APIRouter()
 
@@ -19,7 +21,11 @@ def get_db():
 
 
 @router.get("/reminders/preview")
-def reminder_preview(days: int = 30, db: Session = Depends(get_db)):
+def reminder_preview(
+    days: int = 30,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(current_active_user),
+):
     since = datetime.now() - timedelta(days=days)
     # Grouped lookups instead of 4 queries per client (F-19b)
     inv_counts = dict(
@@ -46,7 +52,7 @@ def reminder_preview(days: int = 30, db: Session = Depends(get_db)):
     )
 
     out = []
-    for c in db.query(models.Client).all():
+    for c in db.query(models.Client).filter(models.Client.owner_id == user.id).all():
         docs = []
         if not inv_counts.get(c.id):
             docs.append("Sales/Purchase invoices")
@@ -75,10 +81,10 @@ def send_client_reminder(
     client_id: int,
     send: schemas.ReminderSend,
     db: Session = Depends(get_db),
+    user: models.User = Depends(current_active_user),
 ):
-    client = db.query(models.Client).filter(models.Client.id == client_id).first()
-    if not client:
-        raise HTTPException(status_code=404, detail="Client not found")
+    require_entitlement(user, "reminder_send")  # TODO(P4): real caps
+    client = get_owned_client(db, user, client_id)
 
     days = send.days if send.days is not None else 30
     return attempt_reminder(
@@ -87,16 +93,34 @@ def send_client_reminder(
 
 
 @router.get("/reminders/history", response_model=list[schemas.EmailReminderOut])
-def reminder_history(client_id: int | None = None, db: Session = Depends(get_db)):
-    q = db.query(models.EmailReminder).order_by(models.EmailReminder.created_at.desc())
+def reminder_history(
+    client_id: int | None = None,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(current_active_user),
+):
+    q = (
+        db.query(models.EmailReminder)
+        .join(models.Client, models.EmailReminder.client_id == models.Client.id)
+        .filter(models.Client.owner_id == user.id)
+        .order_by(models.EmailReminder.created_at.desc())
+    )
     if client_id is not None:
         q = q.filter(models.EmailReminder.client_id == client_id)
     return q.all()
 
 
 @router.delete("/reminders/{reminder_id}")
-def delete_reminder(reminder_id: int, db: Session = Depends(get_db)):
-    reminder = db.query(models.EmailReminder).filter(models.EmailReminder.id == reminder_id).first()
+def delete_reminder(
+    reminder_id: int,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(current_active_user),
+):
+    reminder = (
+        db.query(models.EmailReminder)
+        .join(models.Client, models.EmailReminder.client_id == models.Client.id)
+        .filter(models.EmailReminder.id == reminder_id, models.Client.owner_id == user.id)
+        .first()
+    )
     if not reminder:
         raise HTTPException(status_code=404, detail="Reminder not found")
     db.delete(reminder)
@@ -105,6 +129,6 @@ def delete_reminder(reminder_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/reminders/templates", response_model=list[schemas.ReminderTemplate])
-def list_templates():
+def list_templates(user: models.User = Depends(current_active_user)):
     from ..email_service import DEFAULT_TEMPLATE
     return [schemas.ReminderTemplate(**DEFAULT_TEMPLATE)]

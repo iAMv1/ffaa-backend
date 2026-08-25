@@ -1,0 +1,58 @@
+{
+ "invoice_number": "BILL/2025-26/59450",
+ "supplier": "Amul (GCMMF)",
+ "date": "2024-10-24",
+ "items": [
+  {
+   "product_raw": "ASHRVD ATTA 1K",
+   "quantity": 30,
+   "unit_price": 305.01,
+   "gst_rate": 5,
+   "line_total": 9607.82
+  },
+  {
+   "product_raw": "MINUTE MAID 1L",
+   "quantity": 26,
+   "unit_price": 346.8,
+   "gst_rate": 12,
+   "line_total": 10098.82
+  },
+  {
+   "product_raw": "NSCFE CLS 50G",
+   "quantity": 30,
+   "unit_price": 248.07,
+   "gst_rate": 5,
+   "line_total": 7814.2
+  },
+  {
+   "product_raw": "Bisleri Packaged Drinking Water 1L",
+   "quantity": 35,
+   "unit_price": 158.85,
+   "gst_rate": 18,
+   "line_total": 6560.5
+  },
+  {
+   "product_raw": "PARLEG 250",
+   "quantity": 39,
+   "unit_price": 440.35,
+   "gst_rate": 18,
+   "line_total": 20264.91
+  },
+  {
+   "product_raw": "Sprite 500ml",
+   "quantity": 14,
+   "unit_price": 29.48,
+   "gst_rate": 28,
+   "line_total": 528.28
+  },
+  {
+   "product_raw": "HIDE N SEEK 100G",
+   "quantity": 43,
+   "unit_price": 207.65,
+   "gst_rate": 18,
+   "line_total": 10536.16
+  }
+ ],
+ "grand_total": 65410.69,
+ "extraction_warnings": []
+}

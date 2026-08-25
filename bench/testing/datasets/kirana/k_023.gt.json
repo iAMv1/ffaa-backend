@@ -1,0 +1,93 @@
+{
+ "invoice_number": "BILL/2024-25/12362",
+ "supplier": "Nestle India Ltd",
+ "date": "2024-06-03",
+ "items": [
+  {
+   "product_raw": "Britannia Good Day Butter Cookies 150g",
+   "quantity": 11,
+   "unit_price": 420.73,
+   "gst_rate": 18,
+   "line_total": 5461.08
+  },
+  {
+   "product_raw": "MAGGI 140G",
+   "quantity": 42,
+   "unit_price": 213.7,
+   "gst_rate": 18,
+   "line_total": 10590.97
+  },
+  {
+   "product_raw": "AASHIRVAAD 1KG",
+   "quantity": 4,
+   "unit_price": 195.07,
+   "gst_rate": 5,
+   "line_total": 819.29
+  },
+  {
+   "product_raw": "Close Up Deep Action Toothpaste 150g",
+   "quantity": 28,
+   "unit_price": 317.39,
+   "gst_rate": 18,
+   "line_total": 10486.57
+  },
+  {
+   "product_raw": "LX SOAP 100",
+   "quantity": 14,
+   "unit_price": 264.26,
+   "gst_rate": 18,
+   "line_total": 4365.58
+  },
+  {
+   "product_raw": "Parle-G Biscuit 80g",
+   "quantity": 1,
+   "unit_price": 11.81,
+   "gst_rate": 18,
+   "line_total": 13.94
+  },
+  {
+   "product_raw": "COLGATE SENSITIVE 80G",
+   "quantity": 28,
+   "unit_price": 335.58,
+   "gst_rate": 18,
+   "line_total": 11087.56
+  },
+  {
+   "product_raw": "Amul Butter 500g",
+   "quantity": 25,
+   "unit_price": 50.16,
+   "gst_rate": 12,
+   "line_total": 1404.48
+  },
+  {
+   "product_raw": "MM ORG 1L",
+   "quantity": 21,
+   "unit_price": 181.49,
+   "gst_rate": 12,
+   "line_total": 4268.64
+  },
+  {
+   "product_raw": "MAGGI CHKN 70G",
+   "quantity": 50,
+   "unit_price": 391.91,
+   "gst_rate": 18,
+   "line_total": 23122.69
+  },
+  {
+   "product_raw": "FANTA ORG 250",
+   "quantity": 5,
+   "unit_price": 309.43,
+   "gst_rate": 28,
+   "line_total": 1980.35
+  },
+  {
+   "product_raw": "RIN BAR 250G",
+   "quantity": 23,
+   "unit_price": 348.99,
+   "gst_rate": 18,
+   "line_total": 9471.59
+  }
+ ],
+ "grand_total": 83072.74,
+ "extraction_warnings": []
+}

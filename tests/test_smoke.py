@@ -1,5 +1,6 @@
 import os
 import sys
+import uuid
 from pathlib import Path
 
 # ponytail: ensure tests run from repo root without PYTHONPATH
@@ -39,9 +40,37 @@ def clean_db():
     models.Base.metadata.drop_all(bind=engine)
 
 
+TEST_PASSWORD = "T3st-Passw0rd!"
+
+
+def _register_and_login(c: TestClient, email: str | None = None) -> str:
+    """Register + login a fresh user; TestClient keeps the ffaaauth cookie."""
+    email = email or f"u-{uuid.uuid4().hex}@example.com"
+    r = c.post("/api/v1/auth/register", json={"email": email, "password": TEST_PASSWORD})
+    assert r.status_code == 201, r.text
+    r = c.post("/api/v1/auth/login", data={"username": email, "password": TEST_PASSWORD})
+    assert r.status_code in (200, 204), r.text
+    return email
+
+
+@pytest.fixture(autouse=True)
+def _disable_rate_limiter():
+    # slowapi limits are for live abuse; per-test registrations would trip them.
+    app.state.limiter.enabled = False
+    yield
+    app.state.limiter.enabled = True
+
+
+@pytest.fixture
+def anon_client():
+    return TestClient(app)
+
+
 @pytest.fixture
 def client():
-    return TestClient(app)
+    c = TestClient(app)
+    _register_and_login(c)
+    return c
 
 
 def test_health(client):

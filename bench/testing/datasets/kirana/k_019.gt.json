@@ -1,0 +1,58 @@
+{
+ "invoice_number": "INV/2024-25/44746",
+ "supplier": "Britannia Industries Ltd",
+ "date": "2025-02-05",
+ "items": [
+  {
+   "product_raw": "AMUL PNR 200G",
+   "quantity": 6,
+   "unit_price": 465.26,
+   "gst_rate": 5,
+   "line_total": 2931.14
+  },
+  {
+   "product_raw": "KRCK JCK 200",
+   "quantity": 24,
+   "unit_price": 465.83,
+   "gst_rate": 18,
+   "line_total": 13192.31
+  },
+  {
+   "product_raw": "Lifebuoy Total Soap 100g",
+   "quantity": 20,
+   "unit_price": 102.16,
+   "gst_rate": 18,
+   "line_total": 2410.98
+  },
+  {
+   "product_raw": "AQUAFINA WATER 1LTR",
+   "quantity": 46,
+   "unit_price": 117.42,
+   "gst_rate": 18,
+   "line_total": 6373.56
+  },
+  {
+   "product_raw": "AMUL MASTI 200",
+   "quantity": 35,
+   "unit_price": 413.64,
+   "gst_rate": 5,
+   "line_total": 15201.27
+  },
+  {
+   "product_raw": "EXO DSHWSH 200G",
+   "quantity": 28,
+   "unit_price": 340.01,
+   "gst_rate": 18,
+   "line_total": 11233.93
+  },
+  {
+   "product_raw": "AMUL PNR 200G",
+   "quantity": 6,
+   "unit_price": 465.26,
+   "gst_rate": 5,
+   "line_total": 2931.14
+  }
+ ],
+ "grand_total": 54274.32,
+ "extraction_warnings": []
+}

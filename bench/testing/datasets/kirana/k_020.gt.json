@@ -1,0 +1,58 @@
+{
+ "invoice_number": "INV/2024-25/98095",
+ "supplier": "Emami Limited",
+ "date": "2024-04-23",
+ "items": [
+  {
+   "product_raw": "MAGGI NDL 70",
+   "quantity": 32,
+   "unit_price": 457.82,
+   "gst_rate": 18,
+   "line_total": 17287.28
+  },
+  {
+   "product_raw": "GOOD DAY 100G",
+   "quantity": 11,
+   "unit_price": 183.52,
+   "gst_rate": 18,
+   "line_total": 2382.09
+  },
+  {
+   "product_raw": "Bisleri Packaged Drinking Water 1L",
+   "quantity": 47,
+   "unit_price": 426.39,
+   "gst_rate": 18,
+   "line_total": 23647.59
+  },
+  {
+   "product_raw": "ITC Yippee Mood Masala Noodles 70g",
+   "quantity": 22,
+   "unit_price": 388.95,
+   "gst_rate": 18,
+   "line_total": 10097.14
+  },
+  {
+   "product_raw": "Red Bull Energy Drink 250ml",
+   "quantity": 17,
+   "unit_price": 344.22,
+   "gst_rate": 28,
+   "line_total": 7490.23
+  },
+  {
+   "product_raw": "PG 500",
+   "quantity": 32,
+   "unit_price": 222.85,
+   "gst_rate": 18,
+   "line_total": 8414.82
+  },
+  {
+   "product_raw": "Aashirvaad Whole Wheat Atta 5kg",
+   "quantity": 37,
+   "unit_price": 86.77,
+   "gst_rate": 5,
+   "line_total": 3371.01
+  }
+ ],
+ "grand_total": 72690.16,
+ "extraction_warnings": []
+}

@@ -7,6 +7,12 @@ from pathlib import Path
 CLIENT_ROOT = Path(os.getenv("FFAA_CLIENT_ROOT", "data/clients"))
 
 
+def _client_root(owner_id: int | None = None) -> Path:
+    """Per-owner namespace {FFAA_CLIENT_ROOT}/{owner_id}/ — prevents cross-tenant
+    folder collisions on identical client names. None keeps the legacy root."""
+    return CLIENT_ROOT / str(owner_id) if owner_id else CLIENT_ROOT
+
+
 def _safe_name(name: str) -> str:
     # ponytail: minimal sanitization; enough for folder names
     return "".join(c for c in name if c.isalnum() or c in (" ", "-", "_")).strip()
@@ -22,18 +28,19 @@ def archive_file(
     doc_date: date,
     category: str,
     filename: str,
+    owner_id: int | None = None,
 ) -> str:
-    """Copy source file into {root}/{Client}/{Year}/{Month}/{category}/filename."""
-    root = CLIENT_ROOT / _safe_name(client_name) / str(doc_date.year) / _month_folder(doc_date) / category
+    """Copy source file into {root}/{owner_id}/{Client}/{Year}/{Month}/{category}/filename."""
+    root = _client_root(owner_id) / _safe_name(client_name) / str(doc_date.year) / _month_folder(doc_date) / category
     root.mkdir(parents=True, exist_ok=True)
     dest = root / filename
     shutil.copy2(source_path, dest)
     return str(dest)
 
 
-def list_client_folders(client_name: str) -> dict:
+def list_client_folders(client_name: str, owner_id: int | None = None) -> dict:
     """Return tree of client folder paths. Empty dict if no folder yet."""
-    root = CLIENT_ROOT / _safe_name(client_name)
+    root = _client_root(owner_id) / _safe_name(client_name)
     if not root.exists():
         return {}
 
@@ -55,11 +62,11 @@ def list_client_folders(client_name: str) -> dict:
     return tree
 
 
-def resolve_file_path(client_name: str, rel_path: str) -> Path | None:
+def resolve_file_path(client_name: str, rel_path: str, owner_id: int | None = None) -> Path | None:
     """Resolve a relative path within client root. Block path traversal."""
     try:
         safe_client = _safe_name(client_name)
-        base = (CLIENT_ROOT / safe_client).resolve()
+        base = (_client_root(owner_id) / safe_client).resolve()
         target = (base / rel_path).resolve()
         try:
             target.relative_to(base)

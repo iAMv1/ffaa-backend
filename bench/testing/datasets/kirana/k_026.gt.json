@@ -1,0 +1,51 @@
+{
+ "invoice_number": "GST/2024-25/54223",
+ "supplier": "Marico Limited",
+ "date": "2024-10-15",
+ "items": [
+  {
+   "product_raw": "PARACHUT CNT OIL 500",
+   "quantity": 49,
+   "unit_price": 398.42,
+   "gst_rate": 5,
+   "line_total": 20498.71
+  },
+  {
+   "product_raw": "HPC PP 500",
+   "quantity": 30,
+   "unit_price": 57.44,
+   "gst_rate": 18,
+   "line_total": 2033.38
+  },
+  {
+   "product_raw": "THUMS UP 300ML",
+   "quantity": 50,
+   "unit_price": 59.29,
+   "gst_rate": 28,
+   "line_total": 3794.56
+  },
+  {
+   "product_raw": "NICE 100G",
+   "quantity": 10,
+   "unit_price": 321.32,
+   "gst_rate": 18,
+   "line_total": 3791.58
+  },
+  {
+   "product_raw": "SPRITE 500ML",
+   "quantity": 15,
+   "unit_price": 346.38,
+   "gst_rate": 28,
+   "line_total": 6650.5
+  },
+  {
+   "product_raw": "Pantene Silky Smooth Shampoo 175ml",
+   "quantity": 23,
+   "unit_price": 431.72,
+   "gst_rate": 18,
+   "line_total": 11716.88
+  }
+ ],
+ "grand_total": 48485.6,
+ "extraction_warnings": []
+}

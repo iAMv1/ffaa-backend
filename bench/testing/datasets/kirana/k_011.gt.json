@@ -1,0 +1,44 @@
+{
+ "invoice_number": "INV/2024-25/20134",
+ "supplier": "ITC Limited",
+ "date": "2024-06-26",
+ "items": [
+  {
+   "product_raw": "APPY 250ML",
+   "quantity": 25,
+   "unit_price": 41.21,
+   "gst_rate": 28,
+   "line_total": 1318.72
+  },
+  {
+   "product_raw": "Frooti Fresh N Juicy Mango Drink 500ml",
+   "quantity": 46,
+   "unit_price": 261.63,
+   "gst_rate": 12,
+   "line_total": 13479.18
+  },
+  {
+   "product_raw": "ROBIN 125ML",
+   "quantity": 29,
+   "unit_price": 234.94,
+   "gst_rate": 18,
+   "line_total": 8039.65
+  },
+  {
+   "product_raw": "Bajaj Almond Drops Hair Oil 100ml",
+   "quantity": 26,
+   "unit_price": 398.96,
+   "gst_rate": 18,
+   "line_total": 12240.09
+  },
+  {
+   "product_raw": "DTL SOAP 75",
+   "quantity": 24,
+   "unit_price": 196.53,
+   "gst_rate": 18,
+   "line_total": 5565.73
+  }
+ ],
+ "grand_total": 40643.37,
+ "extraction_warnings": []
+}

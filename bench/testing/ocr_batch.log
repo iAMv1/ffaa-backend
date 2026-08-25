@@ -1,0 +1,21 @@
+train_0.jpg: 30.1s nlines=122
+train_1.jpg: 22.5s nlines=104
+train_10.jpg: 14.2s nlines=104
+train_11.jpg: 22.5s nlines=128
+train_12.jpg: 19.6s nlines=121
+train_13.jpg: 21.1s nlines=125
+train_14.jpg: 21.2s nlines=118
+train_15.jpg: 22.3s nlines=124
+train_16.jpg: 19.1s nlines=118
+train_17.jpg: 19.0s nlines=124
+train_2.jpg: 16.4s nlines=128
+train_3.jpg: 14.8s nlines=121
+train_4.jpg: 14.7s nlines=125
+train_5.jpg: 13.7s nlines=118
+train_6.jpg: 14.5s nlines=124
+train_7.jpg: 13.4s nlines=118
+train_8.jpg: 13.9s nlines=124
+train_9.jpg: 15.7s nlines=122
+val_0.jpg: 20.1s nlines=118
+val_1.jpg: 14.8s nlines=118
+saved C:\Users\ItzP\ffaa\ffaa-backend\bench\testing\indian_texts.json

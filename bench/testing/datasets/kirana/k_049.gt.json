@@ -1,0 +1,51 @@
+{
+ "invoice_number": "INV/2024-25/65451",
+ "supplier": "Hindustan Unilever Ltd",
+ "date": "2024-05-06",
+ "items": [
+  {
+   "product_raw": "FORTUNE OIL 1L",
+   "quantity": 46,
+   "unit_price": 284.67,
+   "gst_rate": 5,
+   "line_total": 13749.56
+  },
+  {
+   "product_raw": "DIGT 200G",
+   "quantity": 28,
+   "unit_price": 86.27,
+   "gst_rate": 18,
+   "line_total": 2850.36
+  },
+  {
+   "product_raw": "LMC 250ML",
+   "quantity": 33,
+   "unit_price": 464.75,
+   "gst_rate": 28,
+   "line_total": 19631.04
+  },
+  {
+   "product_raw": "Aquafina Drinking Water 1L",
+   "quantity": 38,
+   "unit_price": 153.37,
+   "gst_rate": 18,
+   "line_total": 6877.11
+  },
+  {
+   "product_raw": "ODNL 75G",
+   "quantity": 7,
+   "unit_price": 308.28,
+   "gst_rate": 18,
+   "line_total": 2546.39
+  },
+  {
+   "product_raw": "HIT INSECT 400ML",
+   "quantity": 10,
+   "unit_price": 134.98,
+   "gst_rate": 18,
+   "line_total": 1592.76
+  }
+ ],
+ "grand_total": 47247.23,
+ "extraction_warnings": []
+}

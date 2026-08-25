@@ -1,0 +1,58 @@
+{
+ "invoice_number": "TAX/2024-25/78284",
+ "supplier": "Emami Limited",
+ "date": "2024-12-04",
+ "items": [
+  {
+   "product_raw": "VASELINE 200ML",
+   "quantity": 37,
+   "unit_price": 270.93,
+   "gst_rate": 18,
+   "line_total": 11828.8
+  },
+  {
+   "product_raw": "AMUL CHSE SLC 200G",
+   "quantity": 8,
+   "unit_price": 32.86,
+   "gst_rate": 12,
+   "line_total": 294.43
+  },
+  {
+   "product_raw": "ANNAPRNA 5K",
+   "quantity": 1,
+   "unit_price": 15.68,
+   "gst_rate": 5,
+   "line_total": 16.46
+  },
+  {
+   "product_raw": "DABUR AMLA H/OIL 100",
+   "quantity": 30,
+   "unit_price": 263.17,
+   "gst_rate": 18,
+   "line_total": 9316.22
+  },
+  {
+   "product_raw": "DB AMLA OIL 200",
+   "quantity": 46,
+   "unit_price": 211.72,
+   "gst_rate": 18,
+   "line_total": 11492.16
+  },
+  {
+   "product_raw": "KJ 100G",
+   "quantity": 13,
+   "unit_price": 183.9,
+   "gst_rate": 18,
+   "line_total": 2821.03
+  },
+  {
+   "product_raw": "AQUAFINA WATER 1LTR",
+   "quantity": 4,
+   "unit_price": 440.95,
+   "gst_rate": 18,
+   "line_total": 2081.28
+  }
+ ],
+ "grand_total": 37850.38,
+ "extraction_warnings": []
+}

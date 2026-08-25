@@ -1,0 +1,51 @@
+{
+ "invoice_number": "GST/2025-26/14886",
+ "supplier": "Hindustan Unilever Ltd",
+ "date": "2024-08-11",
+ "items": [
+  {
+   "product_raw": "RBN BLUE 125",
+   "quantity": 16,
+   "unit_price": 127.27,
+   "gst_rate": 18,
+   "line_total": 2402.86
+  },
+  {
+   "product_raw": "FROOTI MANGO 200",
+   "quantity": 25,
+   "unit_price": 42.91,
+   "gst_rate": 12,
+   "line_total": 1201.48
+  },
+  {
+   "product_raw": "HMM SOAP 100",
+   "quantity": 38,
+   "unit_price": 197.18,
+   "gst_rate": 18,
+   "line_total": 8841.55
+  },
+  {
+   "product_raw": "ITC Yippee Mood Masala Noodles 70g",
+   "quantity": 35,
+   "unit_price": 25.35,
+   "gst_rate": 18,
+   "line_total": 1046.95
+  },
+  {
+   "product_raw": "THUMBS UP 300",
+   "quantity": 7,
+   "unit_price": 370.95,
+   "gst_rate": 28,
+   "line_total": 3323.71
+  },
+  {
+   "product_raw": "RIN B 250G",
+   "quantity": 11,
+   "unit_price": 390.95,
+   "gst_rate": 18,
+   "line_total": 5074.53
+  }
+ ],
+ "grand_total": 21891.09,
+ "extraction_warnings": []
+}

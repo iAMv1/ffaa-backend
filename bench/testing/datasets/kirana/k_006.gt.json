@@ -1,0 +1,72 @@
+{
+ "invoice_number": "INV/2025-26/93847",
+ "supplier": "Britannia Industries Ltd",
+ "date": "2024-08-28",
+ "items": [
+  {
+   "product_raw": "GODREJ 1 SOAP 100",
+   "quantity": 5,
+   "unit_price": 178.45,
+   "gst_rate": 18,
+   "line_total": 1052.86
+  },
+  {
+   "product_raw": "TOP RAMEN 70G",
+   "quantity": 39,
+   "unit_price": 299.07,
+   "gst_rate": 18,
+   "line_total": 13763.2
+  },
+  {
+   "product_raw": "CADBURY OREO 120",
+   "quantity": 20,
+   "unit_price": 11.19,
+   "gst_rate": 18,
+   "line_total": 264.08
+  },
+  {
+   "product_raw": "AASHIRVAAD 10KG",
+   "quantity": 22,
+   "unit_price": 215.79,
+   "gst_rate": 5,
+   "line_total": 4984.75
+  },
+  {
+   "product_raw": "PEPSODENT WHITE 150G",
+   "quantity": 20,
+   "unit_price": 159.35,
+   "gst_rate": 18,
+   "line_total": 3760.66
+  },
+  {
+   "product_raw": "SURF XL 500G",
+   "quantity": 31,
+   "unit_price": 156.29,
+   "gst_rate": 18,
+   "line_total": 5717.09
+  },
+  {
+   "product_raw": "COLGATE MAXFRESH 150G",
+   "quantity": 19,
+   "unit_price": 354.86,
+   "gst_rate": 18,
+   "line_total": 7955.96
+  },
+  {
+   "product_raw": "RIN WP 1K",
+   "quantity": 21,
+   "unit_price": 185.5,
+   "gst_rate": 18,
+   "line_total": 4596.69
+  },
+  {
+   "product_raw": "PEARS 75G",
+   "quantity": 24,
+   "unit_price": 61.76,
+   "gst_rate": 18,
+   "line_total": 1749.04
+  }
+ ],
+ "grand_total": 43844.33,
+ "extraction_warnings": []
+}

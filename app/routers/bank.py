@@ -10,6 +10,8 @@ from ..database import SessionLocal
 from ..bank_parse import parse_bank_file
 from ..reconcile import best_matches
 from ..folders import archive_file
+from ..tenancy import get_owned_client, require_entitlement
+from ..users import current_active_user
 
 logger = logging.getLogger("ffaa.bank")
 
@@ -32,10 +34,9 @@ def upload_bank(
     client_id: int = Query(...),
     preview: bool = Query(False),
     db: Session = Depends(get_db),
+    user: models.User = Depends(current_active_user),
 ):
-    client = db.query(models.Client).filter(models.Client.id == client_id).first()
-    if not client:
-        raise HTTPException(status_code=404, detail="Client not found")
+    client = get_owned_client(db, user, client_id)
     max_bytes = int(os.environ.get("MAX_FILE_SIZE_MB", "50")) * 1024 * 1024
     if file.size is not None and file.size > max_bytes:
         raise HTTPException(
@@ -87,7 +88,8 @@ def upload_bank(
     # ponytail: archive entire statement file once
     stmt_date = parsed[0]["date"] if parsed[0].get("date") else datetime.now().date()
     archived = archive_file(
-        temp_path, client.name, stmt_date, "Bank Statements", os.path.basename(temp_path)
+        temp_path, client.name, stmt_date, "Bank Statements", os.path.basename(temp_path),
+        owner_id=user.id,
     )
 
     created = []
@@ -117,16 +119,34 @@ def upload_bank(
 
 
 @router.get("/bank-statements", response_model=list[schemas.BankStatementOut])
-def list_bank(client_id: int | None = None, db: Session = Depends(get_db)):
-    q = db.query(models.BankStatement)
+def list_bank(
+    client_id: int | None = None,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(current_active_user),
+):
+    # Transitive scoping through the owning client.
+    q = (
+        db.query(models.BankStatement)
+        .join(models.Client, models.BankStatement.client_id == models.Client.id)
+        .filter(models.Client.owner_id == user.id)
+    )
     if client_id is not None:
         q = q.filter(models.BankStatement.client_id == client_id)
     return q.order_by(models.BankStatement.date.desc()).all()
 
 
 @router.delete("/bank-statements/{bank_id}")
-def delete_bank_statement(bank_id: int, db: Session = Depends(get_db)):
-    bs = db.query(models.BankStatement).filter(models.BankStatement.id == bank_id).first()
+def delete_bank_statement(
+    bank_id: int,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(current_active_user),
+):
+    bs = (
+        db.query(models.BankStatement)
+        .join(models.Client, models.BankStatement.client_id == models.Client.id)
+        .filter(models.BankStatement.id == bank_id, models.Client.owner_id == user.id)
+        .first()
+    )
     if not bs:
         raise HTTPException(status_code=404, detail="Bank statement not found")
     db.query(models.Reconciliation).filter(
@@ -138,7 +158,11 @@ def delete_bank_statement(bank_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/reconciliations", response_model=list[schemas.ReconciliationOut])
-def list_reconciliations(client_id: int | None = None, db: Session = Depends(get_db)):
+def list_reconciliations(
+    client_id: int | None = None,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(current_active_user),
+):
     q = (
         db.query(
             models.Reconciliation,
@@ -147,6 +171,8 @@ def list_reconciliations(client_id: int | None = None, db: Session = Depends(get
             models.Invoice.total_amount,
         )
         .join(models.Invoice, models.Invoice.id == models.Reconciliation.invoice_id)
+        .join(models.Client, models.Invoice.client_id == models.Client.id)
+        .filter(models.Client.owner_id == user.id)
         .join(
             models.BankStatement,
             models.BankStatement.id == models.Reconciliation.bank_statement_id,
@@ -166,10 +192,20 @@ def list_reconciliations(client_id: int | None = None, db: Session = Depends(get
 
 
 @router.delete("/reconciliations/{recon_id}")
-def delete_reconciliation(recon_id: int, db: Session = Depends(get_db)):
+def delete_reconciliation(
+    recon_id: int,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(current_active_user),
+):
     """Undo a match: remove the reconciliation row and reopen the bank row
     (bank row itself is kept)."""
-    rec = db.query(models.Reconciliation).filter(models.Reconciliation.id == recon_id).first()
+    rec = (
+        db.query(models.Reconciliation)
+        .join(models.BankStatement, models.Reconciliation.bank_statement_id == models.BankStatement.id)
+        .join(models.Client, models.BankStatement.client_id == models.Client.id)
+        .filter(models.Reconciliation.id == recon_id, models.Client.owner_id == user.id)
+        .first()
+    )
     if not rec:
         raise HTTPException(status_code=404, detail="Reconciliation not found")
     bs = db.query(models.BankStatement).filter(
@@ -188,7 +224,10 @@ def run_reconcile(
     min_score: float = Query(0.55),
     confirm: bool = Query(False),
     db: Session = Depends(get_db),
+    user: models.User = Depends(current_active_user),
 ):
+    require_entitlement(user, "reconcile_run")  # TODO(P4): real caps
+    get_owned_client(db, user, client_id)
     invoices = (
         db.query(models.Invoice)
         .filter(

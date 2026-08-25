@@ -1,0 +1,281 @@
+Rahul Vikram Sharma
+45/46 Sunrise Apartments
+Park Avenue Street
+Alwarpet
+Chennai
+Tamil Nadu
+India
+600018
+Statement as on
+Customer Email
+Customer ID
+Account Relationship Summary
+: 30/04/2024
+: USER@EXAMPLE.COM
+: 99988877
+INR SAVINGS ACCOUNTS 1265803.00 CR 0.00 0.00 0.00 1265803.00
+INR TERM DEPOSITS 0.00 CR
+Ccy Account Type Balance
+CR
+DR
+Limit Sweep in FD Amt# Total Withdrawable**
+Balance
+Hold
+Amount
+** Total Withdrawable Balance does not include Hold Amount and Unclear Amount.
+Total Withdrawable Balance=Balance+Limit+Sweep in FD Amt-Hold Amount.
+# Sweep In FD may have linkages to multiple accounts.
+RM Name
+: Ananya Kumar S
+RM Contact No : --422-5550123
+RM Email ID : AnanyaKumar.S@Hdfcbank.Com
+Page 1 of 5
+=== PAGE ===
+Rahul Vikram Sharma
+Customer ID
+Account Number
+Joint Holders 1
+Joint Holders 2
+Account Type
+Statement From
+Currency
+Nomination
+Account Branch
+RTGS/NEFT IFSC
+Vepery
+Hdfc Bank Ltd.
+Ywca, 1086,
+P.h.road,
+Chennai
+Tamil Nadu
+600084
+MICR
+Savings Account Details
+Opening Balance Limit
+: 99988877
+: 50100000004567
+: 01/04/2024 To 30/04/2024
+: INR
+: Registered
+: 1073
+: HDFC0001073 : 600240051
+: 14,25,000.00 : 0.00
+: SAVINGS - RESIDENTS (105)
+: Not Applicable
+: Not Applicable
+Txn Date Narration Withdrawals Deposits Closing Balance
+01/04/2024 00487230005612 NET BANKING SI
+-Priya HDFC Value Dt 01/04/2024
+12,000.00 0.00 14,13,000.00
+01/04/2024 55000008834521 NET BANKING SI
+-Rahul PPF Value Dt 01/04/2024
+4,500.00 0.00 14,08,500.00
+01/04/2024 UPI-Rahul Vikram Sharma-fakeuser@
+fifederal-FDRL0005556-409876543210-U
+PI Value Dt 01/04/2024 Ref
+409876543210
+6,000.00 0.00 14,02,500.00
+01/04/2024 NEFT Dr-SBIN0002288-SBI HOME
+LOAN-ACMECORP-
+MUM-N098765432112345-NET
+BANKING SI -SBI Home Loan Value Dt
+01/04/2024 Ref N098765432112345
+78,000.00 0.00 13,24,500.00
+03/04/2024 UPI-MUNICIPAL CORP
+CHENN-municipalcorp.12345678
+@
+hdfcbank-HDFC0000001-409555712344-
+Upi Transaction Value Dt 03/04/2024 Ref
+409555712344
+4,850.00 0.00 13,19,650.00
+05/04/2024 ACH D- RACPC
+CHENNAI-NCACDOSYM2404050001Val
+ue Dt 05/04/2024 Ref 002876543219
+38,000.00 0.00 12,81,650.00
+10/04/2024 UPI-Rahul Vikram Sharma-fakeuser@
+fifederal-FDRL0005556-410876543210-U
+PI Value Dt 10/04/2024 Ref
+410876543210
+6,000.00 0.00 12,75,650.00
+12/04/2024 UPI-Rahul Vikram Sharma-fakeuser@
+fifederal-FDRL0005556-410765432109-U
+PI Value Dt 12/04/2024 Ref
+410765432109
+4,000.00 0.00 12,71,650.00
+Page 2 of 5
+=== PAGE ===
+Rahul Vikram Sharma
+Customer ID
+Account Number
+Joint Holders 1
+Joint Holders 2
+Account Type
+Statement From
+Currency
+Nomination
+Account Branch
+RTGS/NEFT IFSC
+Vepery
+Hdfc Bank Ltd.
+Ywca, 1086,
+P.h.road,
+Chennai
+Tamil Nadu
+600084
+MICR
+Savings Account Details
+Opening Balance Limit
+: 99988877
+: 50100000004567
+: 01/04/2024 To 30/04/2024
+: INR
+: Registered
+: 1073
+: HDFC0001073 : 600240051
+: 14,25,000.00 : 0.00
+: SAVINGS - RESIDENTS (105)
+: Not Applicable
+: Not Applicable
+Txn Date Narration Withdrawals Deposits Closing Balance
+14/04/2024 UPI-NEHA SURESH
+PATEL-9876543210@
+jupiteraxis-FDRL0007777-410654321098-
+UPIValue Dt 14/04/2024 Ref
+410654321098
+5,500.00 0.00 12,66,150.00
+14/04/2024 UPI-Fresh Dairy Co-paytm-99887766@
+paytm-YESB0PTMUPI-447876543210-ex
+press Value Dt 14/04/2024 Ref
+447876543210
+0.00 3.00 12,66,153.00
+15/04/2024 45,350.00 0.00 12,20,803.00
+18/04/2024 UPI-MEERA RAJESH
+VERMA-fakeuser2@
+okaxis-BARB0GUMASH-410543210987-
+UPI Value Dt 18/04/2024 Ref
+410543210987
+3,000.00 0.00 12,17,803.00
+23/04/2024 UPI-Rahul Vikram Sharma-fakeuser@
+fifederal-FDRL0005556-411876543210-U
+PI Value Dt 23/04/2024 Ref
+411876543210
+4,500.00 0.00 12,13,303.00
+25/04/2024 UPI-MEERA RAJESH
+VERMA-fakeuser2@
+okaxis-BARB0GUMASH-411765432109-
+UPI Value Dt 25/04/2024 Ref
+411765432109
+3,500.00 0.00 12,09,803.00
+26/04/2024 NEFT
+Cr-CITI0000004-GLOBEX-1608-SALARY
+PAYMENT-Rahul Vikram
+Sharma-CITIN24998877665 Salary
+Transfer April 2024 Value Dt 26/04/2024
+Ref CITIN24998877665
+0.00 2,35,000.00 14,44,803.00
+Page 3 of 5
+=== PAGE ===
+Rahul Vikram Sharma
+Customer ID
+Account Number
+Joint Holders 1
+Joint Holders 2
+Account Type
+Statement From
+Currency
+Nomination
+Account Branch
+RTGS/NEFT IFSC
+Vepery
+Hdfc Bank Ltd.
+Ywca, 1086,
+P.h.road,
+Chennai
+Tamil Nadu
+600084
+MICR
+Savings Account Details
+Opening Balance Limit
+: 99988877
+: 50100000004567
+: 01/04/2024 To 30/04/2024
+: INR
+: Registered
+: 1073
+: HDFC0001073 : 600240051
+: 14,25,000.00 : 0.00
+: SAVINGS - RESIDENTS (105)
+: Not Applicable
+: Not Applicable
+Txn Date Narration Withdrawals Deposits Closing Balance
+26/04/2024 UPI-NEHA SURESH
+PATEL-9876543210@
+jupiteraxis-FDRL0007777-411654321098-
+UPIValue Dt 26/04/2024 Ref
+411654321098
+5,500.00 0.00 14,39,303.00
+27/04/2024 UPI-MEERA RAJESH
+VERMA-fakeuser2@
+okaxis-BARB0GUMASH-411543210987-
+UPI Value Dt 27/04/2024 Ref
+411543210987
+3,500.00 0.00 14,35,803.00
+29/04/2024 UPI-Trading Corp-brokerfirm.razorpay@
+icici-ICIC0DC0099-412876543210-Pay via
+Razorpay Value Dt 29/04/2024 Ref
+412876543210
+1,85,000.00 0.00 12,50,803.00
+29/04/2024 UPI-RAHUL VIKRAM
+SHARMA-fakeuser3@okhdfcbank-F
+DRL0005556-412765432109-miscValue Dt
+29/04/2024 Ref 412765432109
+0.00 15,000.00 12,65,803.00
+Page 4 of 5
+=== PAGE ===
+Rahul Vikram Sharma
+Customer ID
+Account Number
+Joint Holders 1
+Joint Holders 2
+Account Type
+Statement From
+Currency
+Nomination
+Account Branch
+RTGS/NEFT IFSC
+Vepery
+Hdfc Bank Ltd.
+Ywca, 1086,
+P.h.road,
+Chennai
+Tamil Nadu
+600084
+MICR
+Savings Account Details
+Opening Balance Limit
+: 99988877
+: 50100000004567
+: 01/04/2024 To 30/04/2024
+: INR
+: Registered
+: 1073
+: HDFC0001073 : 600240051
+: 14,25,000.00 : 0.00
+: SAVINGS - RESIDENTS (105)
+: Not Applicable
+: Not Applicable
+: 0.00
+: 12,65,803.00
+**FD may be linked to other Accounts as well
+*** Total withdrawable Balance=Available Balance+Limit+Sweep In FD Amount-Hold Amount
+Total Sweep In FD Linked**
+Total Withdrawal Balance***
+316
+Credit CountDebit Count
+12,65,803.002,50,003.004,09,200.0014,25,000.00
+Closing BalanceCredit AmountDebit AmountOpening Balance
+SUMMARY
+Your Combined statement generation frequency is monthly and the next statement will be generated on next month end. Contents of this
+statement will be considered correct if no error is reported within 30 days of receipt of statement.
+*** End of Statement ***
+Page 5 of 5

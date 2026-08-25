@@ -1,0 +1,93 @@
+{
+ "invoice_number": "INV/2025-26/85512",
+ "supplier": "Hindustan Unilever Ltd",
+ "date": "2024-11-27",
+ "items": [
+  {
+   "product_raw": "FORTUNE CHAKKI 5K",
+   "quantity": 1,
+   "unit_price": 182.02,
+   "gst_rate": 5,
+   "line_total": 191.12
+  },
+  {
+   "product_raw": "Dettol Handwash 200ml",
+   "quantity": 37,
+   "unit_price": 383.35,
+   "gst_rate": 18,
+   "line_total": 16737.06
+  },
+  {
+   "product_raw": "MD PANEER 200G",
+   "quantity": 25,
+   "unit_price": 141.87,
+   "gst_rate": 5,
+   "line_total": 3724.09
+  },
+  {
+   "product_raw": "ITC Sunfeast Marie Biscuit 200g",
+   "quantity": 7,
+   "unit_price": 272.77,
+   "gst_rate": 18,
+   "line_total": 2253.08
+  },
+  {
+   "product_raw": "AMUL CSE SPRD 200G",
+   "quantity": 37,
+   "unit_price": 429.34,
+   "gst_rate": 12,
+   "line_total": 17791.85
+  },
+  {
+   "product_raw": "Mirinda Orange 600ml",
+   "quantity": 21,
+   "unit_price": 391.92,
+   "gst_rate": 28,
+   "line_total": 10534.81
+  },
+  {
+   "product_raw": "MORTEIN SPRAY 425ML",
+   "quantity": 32,
+   "unit_price": 243.36,
+   "gst_rate": 18,
+   "line_total": 9189.27
+  },
+  {
+   "product_raw": "TOP RMN MSL 70",
+   "quantity": 8,
+   "unit_price": 66.57,
+   "gst_rate": 18,
+   "line_total": 628.42
+  },
+  {
+   "product_raw": "TTA SLT 1KG",
+   "quantity": 38,
+   "unit_price": 188.71,
+   "gst_rate": 0,
+   "line_total": 7170.98
+  },
+  {
+   "product_raw": "Ariel Matic Front Load Washing Powder 500g",
+   "quantity": 2,
+   "unit_price": 311.81,
+   "gst_rate": 18,
+   "line_total": 735.87
+  },
+  {
+   "product_raw": "MAGGI MSL 140G",
+   "quantity": 30,
+   "unit_price": 142.22,
+   "gst_rate": 18,
+   "line_total": 5034.59
+  },
+  {
+   "product_raw": "FORTUNE CHAKKI 5K",
+   "quantity": 1,
+   "unit_price": 182.02,
+   "gst_rate": 5,
+   "line_total": 191.12
+  }
+ ],
+ "grand_total": 74182.26,
+ "extraction_warnings": []
+}

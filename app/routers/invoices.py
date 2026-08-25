@@ -11,6 +11,8 @@ from ..ocr import process_invoice_document
 from ..folders import archive_file
 from ..audit import audit_invoice
 from ..services import scan_and_flag_duplicates
+from ..tenancy import get_owned_client, require_entitlement
+from ..users import current_active_user
 
 
 def _out(inv) -> schemas.InvoiceOut:
@@ -54,7 +56,27 @@ def _parse_invoice_date(value: str | None):
             continue
     return None
 
-def _save_invoice(file: UploadFile, client_id: int | None, invoice_type: str, db: Session) -> models.Invoice:
+def _get_owned_invoice(db: Session, user: models.User, invoice_id: int) -> models.Invoice:
+    """Transitive ownership: an invoice belongs to `user` iff its client does."""
+    invoice = (
+        db.query(models.Invoice)
+        .join(models.Client, models.Invoice.client_id == models.Client.id)
+        .filter(models.Invoice.id == invoice_id, models.Client.owner_id == user.id)
+        .first()
+    )
+    if not invoice:
+        raise HTTPException(status_code=404, detail="Invoice not found")
+    return invoice
+
+
+def _save_invoice(
+    file: UploadFile,
+    client_id: int | None,
+    invoice_type: str,
+    db: Session,
+    user: models.User,
+) -> models.Invoice:
+    require_entitlement(user, "invoice_upload")  # TODO(P4): real caps
     if not file.filename:
         raise HTTPException(status_code=400, detail="No file provided")
 
@@ -84,12 +106,25 @@ def _save_invoice(file: UploadFile, client_id: int | None, invoice_type: str, db
 
     ocr_result = process_invoice_document(file_path)
 
-    client = db.query(models.Client).filter(models.Client.id == client_id).first()
+    client = None
+    if client_id is not None:
+        client = get_owned_client(db, user, client_id)
     if not client:
         company_name = ocr_result.get("company_name") or "Unknown"
-        client = db.query(models.Client).filter(models.Client.name == company_name).first()
+        # Auto-mint lookup is owner-scoped: identical company names across
+        # tenants must stay separate clients.
+        client = (
+            db.query(models.Client)
+            .filter(models.Client.name == company_name, models.Client.owner_id == user.id)
+            .first()
+        )
         if not client:
-            client = models.Client(name=company_name, auto_created=True, created_at=datetime.now())
+            require_entitlement(user, "client_auto_mint")
+            # TODO(P4): enforce free-plan client cap here (402 + upgrade CTA).
+            client = models.Client(
+                name=company_name, auto_created=True, owner_id=user.id,
+                created_at=datetime.now(),
+            )
             db.add(client)
             db.commit()
             db.refresh(client)
@@ -100,7 +135,8 @@ def _save_invoice(file: UploadFile, client_id: int | None, invoice_type: str, db
     doc_date = invoice_date or datetime.now().date()
     category = "Sales" if invoice_type == "sales" else "Purchase"
     archived = archive_file(
-        file_path, client.name, doc_date, category, os.path.basename(file_path)
+        file_path, client.name, doc_date, category, os.path.basename(file_path),
+        owner_id=user.id,
     )
 
     invoice = models.Invoice(
@@ -162,9 +198,10 @@ def upload_invoice(
     client_id: int | None = Form(None),
     invoice_type: str = Form("sales"),
     db: Session = Depends(get_db),
+    user: models.User = Depends(current_active_user),
 ):
     try:
-        return _out(_save_invoice(file, client_id, invoice_type, db))
+        return _out(_save_invoice(file, client_id, invoice_type, db, user))
     except HTTPException:
         raise
     except Exception:
@@ -180,11 +217,13 @@ def upload_invoices_batch(
     client_id: int = Form(...),
     invoice_type: str = Form("sales"),
     db: Session = Depends(get_db),
+    user: models.User = Depends(current_active_user),
 ):
+    get_owned_client(db, user, client_id)  # fail the whole batch on foreign client
     results = []
     for file in files:
         try:
-            invoice = _save_invoice(file, client_id, invoice_type, db)
+            invoice = _save_invoice(file, client_id, invoice_type, db, user)
             results.append(schemas.UploadFileResult(
                 filename=file.filename or "?",
                 status="ok",
@@ -206,28 +245,33 @@ def list_invoices(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
+    user: models.User = Depends(current_active_user),
 ):
     q = (
         db.query(models.Invoice)
         .options(joinedload(models.Invoice.client))  # audit GSTIN fallback (F-19a)
+        .join(models.Client, models.Invoice.client_id == models.Client.id)
+        .filter(models.Client.owner_id == user.id)
     )
     if client_id is not None:
         q = q.filter(models.Invoice.client_id == client_id)
     return [_out(i) for i in q.offset(skip).limit(limit).all()]
 @router.get("/invoices/{invoice_id}", response_model=schemas.InvoiceOut)
-def get_invoice(invoice_id: int, db: Session = Depends(get_db)):
-    invoice = db.query(models.Invoice).filter(models.Invoice.id == invoice_id).first()
-    if not invoice:
-        raise HTTPException(status_code=404, detail="Invoice not found")
+def get_invoice(
+    invoice_id: int,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(current_active_user),
+):
+    invoice = _get_owned_invoice(db, user, invoice_id)
     return _out(invoice)
 
 @router.put("/invoices/{invoice_id}/review", response_model=schemas.InvoiceOut)
 def review_invoice(
-    invoice_id: int, invoice_update: schemas.InvoiceCreate, db: Session = Depends(get_db)
+    invoice_id: int, invoice_update: schemas.InvoiceCreate,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(current_active_user),
 ):
-    invoice = db.query(models.Invoice).filter(models.Invoice.id == invoice_id).first()
-    if not invoice:
-        raise HTTPException(status_code=404, detail="Invoice not found")
+    invoice = _get_owned_invoice(db, user, invoice_id)
     if invoice.approved:
         raise HTTPException(status_code=409, detail="Invoice already approved")
 
@@ -250,10 +294,12 @@ def review_invoice(
     return _out(invoice)
 
 @router.put("/invoices/{invoice_id}/approve", response_model=schemas.InvoiceOut)
-def approve_invoice(invoice_id: int, db: Session = Depends(get_db)):
-    invoice = db.query(models.Invoice).filter(models.Invoice.id == invoice_id).first()
-    if not invoice:
-        raise HTTPException(status_code=404, detail="Invoice not found")
+def approve_invoice(
+    invoice_id: int,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(current_active_user),
+):
+    invoice = _get_owned_invoice(db, user, invoice_id)
     if invoice.file_path:
         # ponytail: copy approved invoice to Final Books leaf
         doc_date = invoice.invoice_date or datetime.now().date()
@@ -264,6 +310,7 @@ def approve_invoice(invoice_id: int, db: Session = Depends(get_db)):
                 doc_date,
                 "Final Books",
                 os.path.basename(invoice.file_path),
+                owner_id=user.id,
             )
         except Exception:
             pass
@@ -275,10 +322,12 @@ def approve_invoice(invoice_id: int, db: Session = Depends(get_db)):
 
 
 @router.delete("/invoices/{invoice_id}")
-def delete_invoice(invoice_id: int, db: Session = Depends(get_db)):
-    invoice = db.query(models.Invoice).filter(models.Invoice.id == invoice_id).first()
-    if not invoice:
-        raise HTTPException(status_code=404, detail="Invoice not found")
+def delete_invoice(
+    invoice_id: int,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(current_active_user),
+):
+    invoice = _get_owned_invoice(db, user, invoice_id)
     # cascade: items, dupe flags (both directions), reconciliations, bank links
     db.query(models.InvoiceItem).filter(models.InvoiceItem.invoice_id == invoice_id).delete()
     db.query(models.DuplicateFlag).filter(

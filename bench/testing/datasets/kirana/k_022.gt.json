@@ -1,0 +1,44 @@
+{
+ "invoice_number": "GST/2024-25/43509",
+ "supplier": "Britannia Industries Ltd",
+ "date": "2024-08-21",
+ "items": [
+  {
+   "product_raw": "APPY 250ML",
+   "quantity": 26,
+   "unit_price": 404.7,
+   "gst_rate": 28,
+   "line_total": 13468.42
+  },
+  {
+   "product_raw": "Amul Lite Low Fat Butter 100g",
+   "quantity": 3,
+   "unit_price": 320.99,
+   "gst_rate": 12,
+   "line_total": 1078.53
+  },
+  {
+   "product_raw": "PEPSO WHTNG 150G",
+   "quantity": 16,
+   "unit_price": 129.48,
+   "gst_rate": 18,
+   "line_total": 2444.58
+  },
+  {
+   "product_raw": "Pepsi 250ml",
+   "quantity": 15,
+   "unit_price": 63.6,
+   "gst_rate": 28,
+   "line_total": 1221.12
+  },
+  {
+   "product_raw": "GD CHOCO 75G",
+   "quantity": 46,
+   "unit_price": 211.88,
+   "gst_rate": 18,
+   "line_total": 11500.85
+  }
+ ],
+ "grand_total": 29713.49,
+ "extraction_warnings": []
+}

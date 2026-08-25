@@ -1,0 +1,79 @@
+{
+ "invoice_number": "BILL/2024-25/72847",
+ "supplier": "Dabur India Ltd",
+ "date": "2024-05-14",
+ "items": [
+  {
+   "product_raw": "Pears Pure & Gentle Soap 75g",
+   "quantity": 3,
+   "unit_price": 352.93,
+   "gst_rate": 18,
+   "line_total": 1249.37
+  },
+  {
+   "product_raw": "ANNA ATTA 5KG",
+   "quantity": 50,
+   "unit_price": 34.4,
+   "gst_rate": 5,
+   "line_total": 1806.0
+  },
+  {
+   "product_raw": "SANTOOR 100G",
+   "quantity": 28,
+   "unit_price": 204.6,
+   "gst_rate": 18,
+   "line_total": 6759.98
+  },
+  {
+   "product_raw": "Minute Maid Pulpy Orange 1L",
+   "quantity": 48,
+   "unit_price": 316.11,
+   "gst_rate": 12,
+   "line_total": 16994.07
+  },
+  {
+   "product_raw": "RD BULL 250",
+   "quantity": 41,
+   "unit_price": 374.94,
+   "gst_rate": 28,
+   "line_total": 19676.85
+  },
+  {
+   "product_raw": "FAIR LOVELY 50G",
+   "quantity": 34,
+   "unit_price": 27.44,
+   "gst_rate": 18,
+   "line_total": 1100.89
+  },
+  {
+   "product_raw": "Britannia Good Day Dry Fruit Cookies 150g",
+   "quantity": 21,
+   "unit_price": 245.13,
+   "gst_rate": 18,
+   "line_total": 6074.32
+  },
+  {
+   "product_raw": "OSD DEO 150",
+   "quantity": 44,
+   "unit_price": 353.31,
+   "gst_rate": 18,
+   "line_total": 18343.86
+  },
+  {
+   "product_raw": "LIMCA 250ML",
+   "quantity": 49,
+   "unit_price": 288.9,
+   "gst_rate": 28,
+   "line_total": 18119.81
+  },
+  {
+   "product_raw": "RIN 1KG",
+   "quantity": 28,
+   "unit_price": 144.78,
+   "gst_rate": 18,
+   "line_total": 4783.53
+  }
+ ],
+ "grand_total": 94908.69,
+ "extraction_warnings": []
+}

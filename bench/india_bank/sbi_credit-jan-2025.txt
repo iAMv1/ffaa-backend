@@ -1,0 +1,27 @@
+STATE BANK OF INDIA
+CREDIT CARD STATEMENT
+
+Card No. : 5245 XXXX XXXX 1234
+Card Holder Name: SAMPLE USER
+Statement Period: 26/12/2024 - 25/01/2025
+
+Payment Due Date: 12/02/2025
+Total Amount Due: 21,387.90
+Minimum Amount Due: 1,069.40
+Credit Limit: 1,00,000.00
+Available Credit Limit: 66,550.00
+
+Account Summary
+Previous Balance   Payment Received   Purchases   Finance Charges   Total Amount Due
+6,562.40           5,000.00           18,903.50   922.00             21,387.90
+
+Date      Description                              Amount (Rs.)
+26/12/2024 UPI/GOOGLE PAY/MERCHANT STORE            1,234.56
+27/12/2024 DEBIT CARD PURCHASE - SWIGGY              456.00
+05/01/2025 UPI/123456789012/BIGBASKET              2,345.67
+08/01/2025 PAYMENT RECEIVED - THANKS               5,000.00 Cr
+12/01/2025 REFUND FROM MERCHANT                    1,234.56 Cr
+18/01/2025 EMI PROCESSING FEE, REF 765432            299.00
+25/01/2025 FINANCE CHARGE                            922.00
+25/01/2025 GST                                        53.82
+**** End of Statement ****

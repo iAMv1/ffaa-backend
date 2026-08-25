@@ -1,0 +1,58 @@
+{
+ "invoice_number": "GST/2025-26/09272",
+ "supplier": "Amul (GCMMF)",
+ "date": "2025-02-23",
+ "items": [
+  {
+   "product_raw": "PONDS 100G",
+   "quantity": 13,
+   "unit_price": 562.15,
+   "gst_rate": 18,
+   "line_total": 8623.38
+  },
+  {
+   "product_raw": "OVLTN 400G",
+   "quantity": 11,
+   "unit_price": 228.88,
+   "gst_rate": 18,
+   "line_total": 2970.86
+  },
+  {
+   "product_raw": "BRTNA BRBN 100",
+   "quantity": 13,
+   "unit_price": 304.75,
+   "gst_rate": 18,
+   "line_total": 4674.86
+  },
+  {
+   "product_raw": "TATA GOLD TEA 250",
+   "quantity": 29,
+   "unit_price": 476.55,
+   "gst_rate": 5,
+   "line_total": 14510.95
+  },
+  {
+   "product_raw": "ODNL 75G",
+   "quantity": 35,
+   "unit_price": 215.62,
+   "gst_rate": 18,
+   "line_total": 8905.11
+  },
+  {
+   "product_raw": "SPRT 500ML",
+   "quantity": 22,
+   "unit_price": 478.44,
+   "gst_rate": 28,
+   "line_total": 13472.87
+  },
+  {
+   "product_raw": "Parle Krackjack Sweet & Salt Biscuit 100g",
+   "quantity": 32,
+   "unit_price": 372.39,
+   "gst_rate": 18,
+   "line_total": 14061.45
+  }
+ ],
+ "grand_total": 67219.48,
+ "extraction_warnings": []
+}

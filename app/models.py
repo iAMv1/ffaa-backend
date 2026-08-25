@@ -1,6 +1,12 @@
+from datetime import datetime
+
 from decimal import Decimal
 
-from sqlalchemy import Column, Integer, String, Float, Numeric, Date, DateTime, ForeignKey, Boolean, Text
+from fastapi_users.db import SQLAlchemyBaseUserTable
+from sqlalchemy import (
+    Column, Integer, String, Float, Numeric, Date, DateTime, ForeignKey, Boolean,
+    Text, UniqueConstraint,
+)
 from sqlalchemy.orm import relationship
 from .database import Base
 
@@ -12,12 +18,18 @@ _ZERO = Decimal("0.00")
 class Client(Base):
     __tablename__ = "clients"
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(255), unique=True, index=True)
+    # Global UNIQUE(name) dropped for multi-tenant: identical client names may
+    # exist across owners; uniqueness is per-owner (see __table_args__).
+    name = Column(String(255), index=True)
+    # Tenant owner. Nullable only for pre-migration rows (backfilled to user 1
+    # by scripts/migrate_multi_tenant.py).
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     email = Column(String(255), nullable=True)
     gst_number = Column(String(50), nullable=True)
     address = Column(Text, nullable=True)
     auto_created = Column(Boolean, default=False)  # minted from OCR company name (ticket 03)
     created_at = Column(DateTime)
+    __table_args__ = (UniqueConstraint("owner_id", "name", name="uq_clients_owner_name"),)
 
 class Invoice(Base):
     __tablename__ = "invoices"
@@ -118,3 +130,9 @@ class EmailReminder(Base):
     created_at = Column(DateTime)
 
     client = relationship("Client")
+
+
+class User(SQLAlchemyBaseUserTable[int], Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True)
+    created_at = Column(DateTime, default=datetime.now)

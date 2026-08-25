@@ -1,0 +1,101 @@
+ReduceMeanCheckIfOneDNNSupport
+ReduceMeanCheckIfOneDNNSupport
+ReduceMeanCheckIfOneDNNSupport
+ReduceMeanCheckIfOneDNNSupport
+ReduceMeanCheckIfOneDNNSupport
+ReduceMeanCheckIfOneDNNSupport
+ReduceMeanCheckIfOneDNNSupport
+ReduceMeanCheckIfOneDNNSupport
+ReduceMeanCheckIfOneDNNSupport
+ReduceMeanCheckIfOneDNNSupport
+ReduceMeanCheckIfOneDNNSupport
+kirana k_000.png        paddle= 129.4s rapid=   5.5s prep=   5.6s pt=None rt=None rpt=None
+kirana k_001.png        paddle=  10.3s rapid=   9.4s prep=   9.2s pt=None rt=101544.34 rpt=None
+kirana k_002.png        paddle=   7.1s rapid=   5.6s prep=   7.1s pt=1.0 rt=None rpt=1.0
+kirana k_003.png        paddle= 119.1s rapid=   9.8s prep=   8.1s pt=None rt=None rpt=None
+kirana k_004.png        paddle= 158.2s rapid=  11.7s prep=  12.0s pt=None rt=None rpt=None
+kirana k_005.png        paddle=  12.2s rapid=  12.8s prep=  10.5s pt=None rt=66895.1 rpt=None
+kirana k_006.png        paddle= 149.8s rapid=   9.1s prep=   9.5s pt=None rt=None rpt=None
+kirana k_007.png        paddle=   8.2s rapid=   5.9s prep=   6.5s pt=50.0 rt=50.0 rpt=50.0
+kirana k_008.png        paddle= 126.1s rapid=   9.7s prep=   7.3s pt=None rt=None rpt=None
+kirana k_009.png        paddle=   8.7s rapid=   6.3s prep=   7.2s pt=None rt=58793.63 rpt=None
+kirana k_010.png        paddle= 199.4s rapid=  12.7s prep=  14.2s pt=None rt=None rpt=None
+kirana k_011.png        paddle=  10.3s rapid=   7.5s prep=   8.6s pt=None rt=40643.37 rpt=None
+kirana k_012.png        paddle=  11.2s rapid=   8.8s prep=  10.7s pt=1.0 rt=1.0 rpt=1.0
+kirana k_013.png        paddle= 153.1s rapid=  10.5s prep=   9.3s pt=None rt=50.0 rpt=None
+kirana k_014.png        paddle= 133.3s rapid=   7.5s prep=   7.2s pt=None rt=None rpt=None
+kirana k_015.png        paddle= 116.6s rapid=   8.9s prep=   6.8s pt=None rt=None rpt=None
+kirana k_016.png        paddle= 198.6s rapid=  11.0s prep=  10.4s pt=None rt=None rpt=None
+kirana k_017.png        paddle= 203.4s rapid=  11.3s prep=   9.2s pt=None rt=None rpt=None
+kirana k_018.png        paddle=  12.0s rapid=   9.4s prep=   9.1s pt=None rt=121038.22 rpt=None
+kirana k_019.png        paddle= 118.8s rapid=   6.9s prep=   6.8s pt=None rt=50.0 rpt=None
+kirana k_020.png        paddle= 114.5s rapid=  12.3s prep=   7.7s pt=None rt=None rpt=None
+kirana k_021.png        paddle=   8.8s rapid=   8.4s prep=   8.5s pt=None rt=55964.49 rpt=None
+kirana k_022.png        paddle= 102.4s rapid=   7.8s prep=   6.0s pt=None rt=None rpt=None
+kirana k_023.png        paddle= 205.8s rapid=  11.2s prep=  18.0s pt=None rt=None rpt=None
+kirana k_024.png        paddle= 148.9s rapid=   8.1s prep=   8.3s pt=None rt=None rpt=None
+kirana k_025.png        paddle= 125.0s rapid=  12.9s prep=  23.3s pt=None rt=None rpt=698069653.0
+kirana k_026.png        paddle=   9.2s rapid=   7.7s prep=   6.3s pt=1.0 rt=1.0 rpt=1.0
+kirana k_027.png        paddle= 151.6s rapid=  22.8s prep=  12.8s pt=None rt=None rpt=None
+kirana k_028.png        paddle=  18.7s rapid=  10.7s prep=  13.5s pt=None rt=74182.26 rpt=None
+kirana k_029.png        paddle=  11.2s rapid=   7.2s prep=   7.0s pt=None rt=67219.48 rpt=None
+kirana k_030.png        paddle=   9.8s rapid=  13.5s prep=  13.7s pt=None rt=65821.19 rpt=None
+kirana k_031.png        paddle= 155.0s rapid=   9.4s prep=  10.1s pt=None rt=None rpt=None
+kirana k_032.png        paddle=  15.8s rapid=  12.1s prep=  15.2s pt=None rt=109530.65 rpt=None
+kirana k_033.png        paddle=  12.9s rapid=   9.1s prep=  10.5s pt=1.0 rt=None rpt=1.0
+kirana k_034.png        paddle=  16.4s rapid=  14.6s prep=  15.7s pt=None rt=84135.31 rpt=None
+kirana k_035.png        paddle= 191.0s rapid=  10.5s prep=  11.3s pt=1.0 rt=None rpt=1.0
+kirana k_036.png        paddle= 147.8s rapid=   6.5s prep=   7.3s pt=None rt=None rpt=None
+kirana k_037.png        paddle=  11.4s rapid=  18.6s prep=  23.9s pt=None rt=104796.84 rpt=None
+kirana k_038.png        paddle= 182.3s rapid=  11.1s prep=  10.9s pt=None rt=None rpt=None
+kirana k_039.png        paddle=  80.1s rapid=   5.5s prep=   6.2s pt=1.0 rt=None rpt=None
+kirana k_040.png        paddle=   6.8s rapid=   5.1s prep=   5.8s pt=1.0 rt=None rpt=None
+kirana k_041.png        paddle=   6.0s rapid=   4.8s prep=   5.3s pt=1.0 rt=1.0 rpt=1.0
+kirana k_042.png        paddle= 201.5s rapid=  11.0s prep=  13.2s pt=None rt=None rpt=None
+kirana k_043.png        paddle=   8.1s rapid=   6.0s prep=   6.8s pt=None rt=14486.17 rpt=None
+kirana k_044.png        paddle= 112.3s rapid=   7.3s prep=   6.9s pt=None rt=None rpt=None
+kirana k_045.png        paddle=   8.0s rapid=   5.8s prep=   6.7s pt=1.0 rt=5.0 rpt=5.0
+kirana k_046.png        paddle=  94.2s rapid=   6.1s prep=   7.6s pt=None rt=None rpt=None
+kirana k_047.png        paddle=  12.4s rapid=  10.6s prep=  11.0s pt=1.0 rt=8.0 rpt=1.0
+kirana k_048.png        paddle= 154.3s rapid=   9.4s prep=   7.6s pt=None rt=None rpt=None
+kirana k_049.png        paddle=   8.0s rapid=   6.6s prep=  10.1s pt=None rt=47247.23 rpt=None
+kenil  train_0.jpg      paddle=  21.6s rapid=  27.2s prep=  41.7s pt=9040.0 rt=9040.0 rpt=9040.0
+kenil  train_1.jpg      paddle=  26.8s rapid=  21.1s prep=  21.7s pt=14450.0 rt=14450.0 rpt=14450.0
+kenil  train_10.jpg     paddle=  18.9s rapid=  15.0s prep=  16.6s pt=14450.0 rt=14450.0 rpt=14450.0
+kenil  train_11.jpg     paddle=  22.9s rapid=  23.9s prep=  22.8s pt=12720.0 rt=12720.0 rpt=12720.0
+kenil  train_12.jpg     paddle=  21.8s rapid=  26.3s prep=  25.6s pt=14000.0 rt=14000.0 rpt=1.0
+kenil  train_13.jpg     paddle=  24.2s rapid=  43.3s prep=  26.4s pt=6780.0 rt=6780.0 rpt=400.0
+kenil  train_14.jpg     paddle=  20.9s rapid=  20.4s prep=  21.6s pt=907.2 rt=907.2 rpt=180.0
+kenil  train_15.jpg     paddle=  27.3s rapid=  22.2s prep=  22.5s pt=1000.0 rt=16984.0 rpt=16984.0
+kenil  train_16.jpg     paddle=  19.2s rapid=  19.4s prep=  20.6s pt=3575.0 rt=3575.0 rpt=3575.0
+kenil  train_17.jpg     paddle=  17.2s rapid=  18.1s prep=  18.7s pt=961.2 rt=5340.0 rpt=480.6
+kenil  train_2.jpg      paddle=  18.7s rapid=  18.2s prep=  20.3s pt=12720.0 rt=12720.0 rpt=12720.0
+kenil  train_3.jpg      paddle=  21.5s rapid=  33.4s prep=  18.4s pt=14000.0 rt=14000.0 rpt=1.0
+kenil  train_4.jpg      paddle=  24.2s rapid=  16.3s prep=  18.2s pt=6780.0 rt=6780.0 rpt=400.0
+kenil  train_5.jpg      paddle=  21.1s rapid=  16.9s prep=  16.4s pt=907.2 rt=907.2 rpt=180.0
+kenil  train_6.jpg      paddle=  20.0s rapid=  17.8s prep=  18.6s pt=1000.0 rt=16984.0 rpt=16984.0
+kenil  train_7.jpg      paddle=  26.4s rapid=  42.3s prep=  27.7s pt=3575.0 rt=3575.0 rpt=3575.0
+kenil  train_8.jpg      paddle=  28.4s rapid=  17.1s prep=  18.9s pt=961.2 rt=5340.0 rpt=480.6
+kenil  train_9.jpg      paddle=  22.3s rapid=  21.2s prep=  18.9s pt=9040.0 rt=9040.0 rpt=9040.0
+kenil  val_0.jpg        paddle=  20.6s rapid=  23.9s prep=  21.0s pt=500.0 rt=14120.0 rpt=14120.0
+kenil  val_1.jpg        paddle=  22.1s rapid=  20.2s prep=  16.3s pt=500.0 rt=14120.0 rpt=14120.0
+sroie  X510056849111.jpg paddle=  63.4s rapid=  14.3s prep=   6.9s pt=None rt=None rpt=None
+sroie  X51009008095.jpg paddle=   7.5s rapid=   7.7s prep=   6.4s pt=30.0 rt=30.0 rpt=None
+sroie  X51009447842.jpg paddle=   7.4s rapid=   9.5s prep=   8.6s pt=1.0 rt=1.0 rpt=1.0
+sroie  X51009453729.jpg paddle=   7.9s rapid=   8.3s prep=   8.7s pt=75.0 rt=75.0 rpt=None
+sroie  X51009568881.jpg paddle=   8.2s rapid=   9.6s prep=   6.6s pt=9.81 rt=9.81 rpt=None
+
+== kirana (n=50) ==
+  paddle       total=0/50 avg=84.3s supplier=0/50 date=0/50
+  rapid_stock  total=14/50 avg=0.0s supplier=21/50 date=48/50
+  rapid_prep   total=0/50 avg=9.8s supplier=9/50 date=27/50
+
+== kenil (n=20) ==
+  paddle       total=0/20 avg=22.3s invoice_no=0/20
+  rapid_stock  total=20/20 avg=0.0s invoice_no=0/20
+  rapid_prep   total=0/20 avg=21.6s invoice_no=2/20
+
+== sroie (n=5) ==
+  paddle       total=0/5 avg=18.9s
+  rapid_stock  total=3/5 avg=0.0s
+  rapid_prep   total=0/5 avg=7.4s

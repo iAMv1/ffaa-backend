@@ -1,0 +1,86 @@
+{
+ "invoice_number": "GST/2025-26/33020",
+ "supplier": "Emami Limited",
+ "date": "2025-02-16",
+ "items": [
+  {
+   "product_raw": "KRACKJACK 100G",
+   "quantity": 14,
+   "unit_price": 203.13,
+   "gst_rate": 18,
+   "line_total": 3355.71
+  },
+  {
+   "product_raw": "Amul Taaza Toned Milk 1L",
+   "quantity": 19,
+   "unit_price": 139.84,
+   "gst_rate": 0,
+   "line_total": 2656.96
+  },
+  {
+   "product_raw": "P-G 80GM",
+   "quantity": 31,
+   "unit_price": 378.85,
+   "gst_rate": 18,
+   "line_total": 13858.33
+  },
+  {
+   "product_raw": "PEPSODENT 150G",
+   "quantity": 23,
+   "unit_price": 151.11,
+   "gst_rate": 18,
+   "line_total": 4101.13
+  },
+  {
+   "product_raw": "LIFEBUY 100G",
+   "quantity": 45,
+   "unit_price": 415.74,
+   "gst_rate": 18,
+   "line_total": 22075.79
+  },
+  {
+   "product_raw": "AASHIRVAAD 1KG",
+   "quantity": 18,
+   "unit_price": 83.74,
+   "gst_rate": 5,
+   "line_total": 1582.69
+  },
+  {
+   "product_raw": "BRTNA NC 100",
+   "quantity": 2,
+   "unit_price": 376.64,
+   "gst_rate": 18,
+   "line_total": 888.87
+  },
+  {
+   "product_raw": "TATA TEA 250G",
+   "quantity": 15,
+   "unit_price": 473.62,
+   "gst_rate": 5,
+   "line_total": 7459.52
+  },
+  {
+   "product_raw": "LUX SOAP 150G",
+   "quantity": 8,
+   "unit_price": 134.34,
+   "gst_rate": 18,
+   "line_total": 1268.17
+  },
+  {
+   "product_raw": "VATIKA OIL 200ML",
+   "quantity": 45,
+   "unit_price": 54.65,
+   "gst_rate": 18,
+   "line_total": 2901.91
+  },
+  {
+   "product_raw": "Surf Excel Matic Front Load Powder 1kg",
+   "quantity": 48,
+   "unit_price": 246.91,
+   "gst_rate": 18,
+   "line_total": 13984.98
+  }
+ ],
+ "grand_total": 74134.06,
+ "extraction_warnings": []
+}

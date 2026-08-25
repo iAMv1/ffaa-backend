@@ -1,0 +1,93 @@
+{
+ "invoice_number": "INV/2025-26/08249",
+ "supplier": "Dabur India Ltd",
+ "date": "2025-02-25",
+ "items": [
+  {
+   "product_raw": "SF CB 75G",
+   "quantity": 49,
+   "unit_price": 211.91,
+   "gst_rate": 18,
+   "line_total": 12252.64
+  },
+  {
+   "product_raw": "NESCAFE 100G",
+   "quantity": 22,
+   "unit_price": 309.08,
+   "gst_rate": 5,
+   "line_total": 7139.75
+  },
+  {
+   "product_raw": "SHAKTI BHOG 5KG",
+   "quantity": 13,
+   "unit_price": 375.59,
+   "gst_rate": 5,
+   "line_total": 5126.8
+  },
+  {
+   "product_raw": "SNT SOAP 100",
+   "quantity": 20,
+   "unit_price": 244.84,
+   "gst_rate": 18,
+   "line_total": 5778.22
+  },
+  {
+   "product_raw": "PARLE G 250G",
+   "quantity": 7,
+   "unit_price": 331.2,
+   "gst_rate": 18,
+   "line_total": 2735.71
+  },
+  {
+   "product_raw": "VIM 200G",
+   "quantity": 37,
+   "unit_price": 325.13,
+   "gst_rate": 18,
+   "line_total": 14195.18
+  },
+  {
+   "product_raw": "PARACHUTE 1L",
+   "quantity": 50,
+   "unit_price": 195.03,
+   "gst_rate": 5,
+   "line_total": 10239.08
+  },
+  {
+   "product_raw": "DTL SOAP 75",
+   "quantity": 40,
+   "unit_price": 320.74,
+   "gst_rate": 18,
+   "line_total": 15138.93
+  },
+  {
+   "product_raw": "GDJ NO.1 100G",
+   "quantity": 42,
+   "unit_price": 288.95,
+   "gst_rate": 18,
+   "line_total": 14320.36
+  },
+  {
+   "product_raw": "ASHIRWAAD ATTA 5KG",
+   "quantity": 15,
+   "unit_price": 448.3,
+   "gst_rate": 5,
+   "line_total": 7060.73
+  },
+  {
+   "product_raw": "PILSB ATT 5KG",
+   "quantity": 24,
+   "unit_price": 76.43,
+   "gst_rate": 5,
+   "line_total": 1926.04
+  },
+  {
+   "product_raw": "CADBURY OREO 120",
+   "quantity": 48,
+   "unit_price": 156.84,
+   "gst_rate": 18,
+   "line_total": 8883.42
+  }
+ ],
+ "grand_total": 104796.84,
+ "extraction_warnings": []
+}

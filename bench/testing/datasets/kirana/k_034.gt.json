@@ -1,0 +1,114 @@
+{
+ "invoice_number": "BILL/2024-25/66463",
+ "supplier": "Amul (GCMMF)",
+ "date": "2025-03-12",
+ "items": [
+  {
+   "product_raw": "SNT SOAP 100",
+   "quantity": 14,
+   "unit_price": 189.39,
+   "gst_rate": 18,
+   "line_total": 3128.72
+  },
+  {
+   "product_raw": "AMUL CHSE BLK 200G",
+   "quantity": 4,
+   "unit_price": 450.01,
+   "gst_rate": 12,
+   "line_total": 2016.04
+  },
+  {
+   "product_raw": "Red Bull Energy Drink 250ml",
+   "quantity": 31,
+   "unit_price": 108.73,
+   "gst_rate": 28,
+   "line_total": 4314.41
+  },
+  {
+   "product_raw": "BROOKE BOND 500G",
+   "quantity": 49,
+   "unit_price": 330.69,
+   "gst_rate": 5,
+   "line_total": 17014.0
+  },
+  {
+   "product_raw": "Dettol Original Soap 125g",
+   "quantity": 6,
+   "unit_price": 74.9,
+   "gst_rate": 18,
+   "line_total": 530.29
+  },
+  {
+   "product_raw": "SF NICE 100G",
+   "quantity": 20,
+   "unit_price": 420.42,
+   "gst_rate": 18,
+   "line_total": 9921.91
+  },
+  {
+   "product_raw": "SURF EXCEL 1KG",
+   "quantity": 34,
+   "unit_price": 109.06,
+   "gst_rate": 18,
+   "line_total": 4375.49
+  },
+  {
+   "product_raw": "LUX SOAP 100G",
+   "quantity": 4,
+   "unit_price": 51.63,
+   "gst_rate": 18,
+   "line_total": 243.69
+  },
+  {
+   "product_raw": "BRTNA BRBN 150",
+   "quantity": 49,
+   "unit_price": 148.14,
+   "gst_rate": 18,
+   "line_total": 8565.45
+  },
+  {
+   "product_raw": "DOVE SHAMPOO 180ML",
+   "quantity": 31,
+   "unit_price": 232.44,
+   "gst_rate": 18,
+   "line_total": 8502.66
+  },
+  {
+   "product_raw": "WAI WAI MSL 75",
+   "quantity": 45,
+   "unit_price": 214.16,
+   "gst_rate": 18,
+   "line_total": 11371.9
+  },
+  {
+   "product_raw": "DETTOL SOAP 75G",
+   "quantity": 1,
+   "unit_price": 272.75,
+   "gst_rate": 18,
+   "line_total": 321.84
+  },
+  {
+   "product_raw": "TOP RAMEN 70G",
+   "quantity": 5,
+   "unit_price": 349.13,
+   "gst_rate": 18,
+   "line_total": 2059.87
+  },
+  {
+   "product_raw": "THUMBS UP 600",
+   "quantity": 21,
+   "unit_price": 321.44,
+   "gst_rate": 28,
+   "line_total": 8640.31
+  },
+  {
+   "product_raw": "SNT SOAP 100",
+   "quantity": 14,
+   "unit_price": 189.39,
+   "gst_rate": 18,
+   "line_total": 3128.72
+  }
+ ],
+ "grand_total": 84135.31,
+ "extraction_warnings": []
+}

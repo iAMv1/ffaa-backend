@@ -1,0 +1,58 @@
+{
+ "invoice_number": "BILL/2025-26/36747",
+ "supplier": "Emami Limited",
+ "date": "2024-04-29",
+ "items": [
+  {
+   "product_raw": "LFB SOAP 150G",
+   "quantity": 10,
+   "unit_price": 426.36,
+   "gst_rate": 18,
+   "line_total": 5031.05
+  },
+  {
+   "product_raw": "Pantene Silky Smooth Shampoo 175ml",
+   "quantity": 37,
+   "unit_price": 155.46,
+   "gst_rate": 18,
+   "line_total": 6787.38
+  },
+  {
+   "product_raw": "PARACHUT CNT OIL 200",
+   "quantity": 27,
+   "unit_price": 445.95,
+   "gst_rate": 5,
+   "line_total": 12642.68
+  },
+  {
+   "product_raw": "Knorr Chicken Soupy Noodles 43g",
+   "quantity": 47,
+   "unit_price": 76.16,
+   "gst_rate": 18,
+   "line_total": 4223.83
+  },
+  {
+   "product_raw": "Rin Washing Powder 500g",
+   "quantity": 29,
+   "unit_price": 302.85,
+   "gst_rate": 18,
+   "line_total": 10363.53
+  },
+  {
+   "product_raw": "Tata Salt 1kg",
+   "quantity": 10,
+   "unit_price": 425.2,
+   "gst_rate": 0,
+   "line_total": 4252.0
+  },
+  {
+   "product_raw": "LFB SOAP 150G",
+   "quantity": 10,
+   "unit_price": 426.36,
+   "gst_rate": 18,
+   "line_total": 5031.05
+  }
+ ],
+ "grand_total": 48331.52,
+ "extraction_warnings": []
+}

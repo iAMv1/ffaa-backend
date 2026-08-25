@@ -1,0 +1,44 @@
+{
+ "invoice_number": "INV/2025-26/12067",
+ "supplier": "Britannia Industries Ltd",
+ "date": "2024-10-27",
+ "items": [
+  {
+   "product_raw": "HML SHMP 200ML",
+   "quantity": 8,
+   "unit_price": 32.5,
+   "gst_rate": 18,
+   "line_total": 306.8
+  },
+  {
+   "product_raw": "NC DIGT 100",
+   "quantity": 36,
+   "unit_price": 116.49,
+   "gst_rate": 18,
+   "line_total": 4948.5
+  },
+  {
+   "product_raw": "BRU GLD 50G",
+   "quantity": 49,
+   "unit_price": 453.19,
+   "gst_rate": 5,
+   "line_total": 23316.63
+  },
+  {
+   "product_raw": "MAGGI NDL 70",
+   "quantity": 34,
+   "unit_price": 31.34,
+   "gst_rate": 18,
+   "line_total": 1257.36
+  },
+  {
+   "product_raw": "Dabur Amla Hair Oil 200ml",
+   "quantity": 29,
+   "unit_price": 58.69,
+   "gst_rate": 18,
+   "line_total": 2008.37
+  }
+ ],
+ "grand_total": 31837.65,
+ "extraction_warnings": []
+}

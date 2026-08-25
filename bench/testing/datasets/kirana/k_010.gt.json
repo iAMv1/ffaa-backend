@@ -1,0 +1,93 @@
+{
+ "invoice_number": "BILL/2025-26/73559",
+ "supplier": "Emami Limited",
+ "date": "2024-06-01",
+ "items": [
+  {
+   "product_raw": "Maaza Mango Drink 600ml",
+   "quantity": 47,
+   "unit_price": 16.6,
+   "gst_rate": 12,
+   "line_total": 873.82
+  },
+  {
+   "product_raw": "COKE 1L",
+   "quantity": 5,
+   "unit_price": 84.6,
+   "gst_rate": 28,
+   "line_total": 541.44
+  },
+  {
+   "product_raw": "SURF XL 1K",
+   "quantity": 31,
+   "unit_price": 475.81,
+   "gst_rate": 18,
+   "line_total": 17405.13
+  },
+  {
+   "product_raw": "MASKA CHASKA 75G",
+   "quantity": 2,
+   "unit_price": 168.57,
+   "gst_rate": 18,
+   "line_total": 397.83
+  },
+  {
+   "product_raw": "DTL HW 200",
+   "quantity": 7,
+   "unit_price": 389.03,
+   "gst_rate": 18,
+   "line_total": 3213.39
+  },
+  {
+   "product_raw": "MCVT DIG 200",
+   "quantity": 14,
+   "unit_price": 87.07,
+   "gst_rate": 18,
+   "line_total": 1438.4
+  },
+  {
+   "product_raw": "DOMEX 500ML",
+   "quantity": 50,
+   "unit_price": 284.76,
+   "gst_rate": 18,
+   "line_total": 16800.84
+  },
+  {
+   "product_raw": "PILSBURY ATTA 5K",
+   "quantity": 43,
+   "unit_price": 448.75,
+   "gst_rate": 5,
+   "line_total": 20261.06
+  },
+  {
+   "product_raw": "Comfort Fabric Conditioner 220ml",
+   "quantity": 25,
+   "unit_price": 160.09,
+   "gst_rate": 18,
+   "line_total": 4722.65
+  },
+  {
+   "product_raw": "PTNJLI ATT 5KG",
+   "quantity": 3,
+   "unit_price": 255.77,
+   "gst_rate": 5,
+   "line_total": 805.68
+  },
+  {
+   "product_raw": "Dove Damage Therapy Shampoo 180ml",
+   "quantity": 42,
+   "unit_price": 167.88,
+   "gst_rate": 18,
+   "line_total": 8320.13
+  },
+  {
+   "product_raw": "Amul Taaza Toned Milk 1L",
+   "quantity": 21,
+   "unit_price": 508.82,
+   "gst_rate": 0,
+   "line_total": 10685.22
+  }
+ ],
+ "grand_total": 85465.59,
+ "extraction_warnings": []
+}

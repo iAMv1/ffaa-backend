@@ -1,0 +1,196 @@
+Loan AccountsBalance
+Rs.1184.2
+Transaction
+Accounts
+Transaction
+Details
+Summary
+Outstanding
+Rs.-8.2+ L
+XXXXXXX0000Customer
+Welcome Mr. JOHN DOE
+As on 31-08-25
+MY INFORMATION
+My Address
+Email ID
+Segment
+Mobile
+Number
+MY HOME BRANCH INFORMATION
+Home Branch
+Branch Email
+ID
+Branch
+Code
+Branch Phone
+Number
+user@example.com
+1/2 SAMPLE APARTMENT,MAIN
+STREET,AREA,00000:Cityville,STATE-000000.
+91XXXXXX00
+DIAMOND
+WORLD UNIV SER
+CENTRE CHENNAI
+02288
+sbi.02288@sbi.co.in
+044-28362327
+PLEASE DO NOT SHARE YOUR ATM, DEBIT/CREDIT CARD NUMBER, PIN AND OTP WITH ANYONE ELSE. BANK NEVER ASKS FOR SUCH INFORMATION.
+My Name Mr. JOHN DOE
+CKXXXXX00EPAN
+KYC Status Compliant
+Toll Free
+Number
+1800 11 2211
+1800 1234
+Available Balance
+No. of Accounts
+CurrencyDeposit Accounts
+MY ACCOUNTS
+SecondaryPrimary
+SAVING ACCOUNT INR 1 0 1184.21Transaction Accounts*
+Total INR: Rs. 1184.21
+*Each depositor is insured by the Deposit Insurance and Credit Guarantee Corporation(DICGC) upto the maximum of Rs. 5 Lakh, for both principal and interest amount held by him in the same right and
+same capacity.
+LOAN ACCOUNTS
+DL/TL ACCOUNT INR -828466.00 - 1 0
+INR: Rs. -828466.00Total
+Primary Secondary
+No. of Accounts
+Currency Outstanding Amount Available Balance
+Visit https://sbi.co.in Customer Care 1800 1234 Customer Care customercare@sbi.co.in 1 of 5Number : Email :
+=== PAGE ===
+Loan AccountsBalance
+Rs.1184.2
+Transaction
+Accounts
+Transaction
+Details
+Summary
+Outstanding
+Rs.-8.2+ L
+XXXXXXX0000Customer
+Welcome Mr. JOHN DOE
+As on 31-08-25
+TRANSACTION ACCOUNTS
+Holding Status Account Number Account Status Currency Current Balance Lien/Hold Amount MOD** Balance Available Balance
+P XXXXXXX0000 OPEN INR 1184.21 0.00 0.00 1184.21
+SAVINGS ACCOUNTS
+** P – Primary Account Holder
+**MOD: Multi Option Deposit
+**S – Secondary Account Holder
+Visit https://sbi.co.in Customer Care 1800 1234 Customer Care customercare@sbi.co.in 2 of 5Number : Email :
+=== PAGE ===
+Loan AccountsBalance
+Rs.1184.2
+Transaction
+Accounts
+Transaction
+Details
+Summary
+Outstanding
+Rs.-8.2+ L
+XXXXXXX0000Customer
+Welcome Mr. JOHN DOE
+As on 31-08-25
+LOAN / OD ACCOUNTS
+Account Type
+Account
+Number
+Currency
+Sanctioned
+Date*
+Sanctioned Amount
+Drawing Power
+Residual
+Tenure
+ROI
+(%)**
+Outstanding
+Arrear
+Amount
+DL/TL ACCOUNT XXXXXXX0000 INR 07-08-21 5016000.00 2881300.00
+22 Years 11
+Months 07
+Days
+8.50 -828466.00 0.00
+*All dates are in DD-MM-YY
+**ROI: Rate Of Interest
+LOAN ACCOUNTS ADDITIONAL DETAILS
+Account Number EMI / Installment Amount Principal Recovered Till Date Original Term (Months)
+XXXXXXX0000 27246.00 4193510.00 324
+Visit https://sbi.co.in Customer Care 1800 1234 Customer Care customercare@sbi.co.in 3 of 5Number : Email :
+=== PAGE ===
+Loan AccountsBalance
+Rs.1184.2
+Transaction
+Accounts
+Transaction
+Details
+Summary
+Outstanding
+Rs.-8.2+ L
+XXXXXXX0000Customer
+Welcome Mr. JOHN DOE
+As on 31-08-25
+TRANSACTION DETAILS
+DL/TL ACCOUNT
+XXXXXXX0000
+Name of the Account Holder Mr. JOHN DOE
+1/2 SAMPLE APARTMENT,MAIN
+STREET,AREA,00000:Cityville,STATE-000000.
+Address
+Branch Name WORLD UNIV SER CENTRE CHENNAI
+02288Branch Code
+MICR Code 600002061
+SBIN0002288IFSC Code
+Date Transaction Reference Ref.No./Chq.No. Credit Debit Balance
+null null null null null null
+01-08-25 INTEREST REPAYMENT GL TO LOANS - 6829.00 - 940661.00
+01-08-25 PRINCIPAL REPAYMENT GL TO LOAN - 77171.00 - 863490.00
+05-08-25 PRINCIPAL REPAYMENT GL TO LOAN - 41000.00 - 822490.00
+31-08-25 INTEREST - - 5976.00 828466.00
+*All dates are in DD-MM-YY format
+TRANSACTION OVERVIEW
+Your Opening Balance on 01-08-25: 947490.00
+Your Closing Balance on 31-08-25: 828466.00
+Contents of this statement will be considered correct if no error is reported within 30 days of receipt of the statement.
+Visit https://sbi.co.in Customer Care 1800 1234 Customer Care customercare@sbi.co.in 4 of 5Number : Email :
+=== PAGE ===
+Loan AccountsBalance
+Rs.1184.2
+Transaction
+Accounts
+Transaction
+Details
+Summary
+Outstanding
+Rs.-8.2+ L
+XXXXXXX0000Customer
+Welcome Mr. JOHN DOE
+As on 31-08-25
+TRANSACTION DETAILS
+SAVING ACCOUNT
+XXXXXXX0000
+Nominee Registered No
+Available Balance 1184.21
+Multi-Option Deposit Balance 0.00
+Name of the Account Holder Mr. JOHN DOE
+1/2 SAMPLE APARTMENT,MAIN
+STREET,AREA,00000:Cityville,STATE-000000.
+Address
+SINGLEMode of Operation
+Branch Name PURASAWALKAM (CHENNAI )
+01515Branch Code
+MICR Code 600002041
+SBIN0001515IFSC Code
+Date Transaction Reference Ref.No./Chq.No. Credit Debit Balance
+null null null null null null
+04-08-25
+APY_AUG25_Mont_1000_99999999999999999_999999999999
+- - 90.00 1184.21
+*All dates are in DD-MM-YY format
+TRANSACTION OVERVIEW
+Your Closing Balance on 31-08-25: 1184.21
+Your Opening Balance on 01-08-25: 1274.21
+Contents of this statement will be considered correct if no error is reported within 30 days of receipt of the statement.
+Visit https://sbi.co.in Customer Care 1800 1234 Customer Care customercare@sbi.co.in 5 of 5Number : Email :

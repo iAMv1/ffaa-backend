@@ -5,6 +5,8 @@ from datetime import datetime
 from .. import models, schemas
 from ..database import SessionLocal
 from ..services import scan_and_flag_duplicates
+from ..tenancy import require_entitlement
+from ..users import current_active_user
 
 router = APIRouter()
 
@@ -18,8 +20,18 @@ def get_db():
 
 
 @router.post("/invoices/{invoice_id}/duplicates/check", response_model=schemas.DuplicateScanResult)
-def check_duplicates(invoice_id: int, db: Session = Depends(get_db)):
-    invoice = db.query(models.Invoice).filter(models.Invoice.id == invoice_id).first()
+def check_duplicates(
+    invoice_id: int,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(current_active_user),
+):
+    require_entitlement(user, "duplicate_scan")  # TODO(P4): real caps
+    invoice = (
+        db.query(models.Invoice)
+        .join(models.Client, models.Invoice.client_id == models.Client.id)
+        .filter(models.Invoice.id == invoice_id, models.Client.owner_id == user.id)
+        .first()
+    )
     if not invoice:
         raise HTTPException(status_code=404, detail="Invoice not found")
 
@@ -36,16 +48,36 @@ def check_duplicates(invoice_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/duplicates/flags", response_model=list[schemas.DuplicateFlagOut])
-def list_flags(status: str | None = None, db: Session = Depends(get_db)):
-    q = db.query(models.DuplicateFlag)
+def list_flags(
+    status: str | None = None,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(current_active_user),
+):
+    q = (
+        db.query(models.DuplicateFlag)
+        .join(models.Invoice, models.DuplicateFlag.invoice_id == models.Invoice.id)
+        .join(models.Client, models.Invoice.client_id == models.Client.id)
+        .filter(models.Client.owner_id == user.id)
+    )
     if status:
         q = q.filter(models.DuplicateFlag.status == status)
     return q.order_by(models.DuplicateFlag.similarity_score.desc()).all()
 
 
 @router.post("/duplicates/flags/{flag_id}/resolve", response_model=schemas.DuplicateFlagOut)
-def resolve_flag(flag_id: int, resolve: schemas.DuplicateResolve, db: Session = Depends(get_db)):
-    flag = db.query(models.DuplicateFlag).filter(models.DuplicateFlag.id == flag_id).first()
+def resolve_flag(
+    flag_id: int,
+    resolve: schemas.DuplicateResolve,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(current_active_user),
+):
+    flag = (
+        db.query(models.DuplicateFlag)
+        .join(models.Invoice, models.DuplicateFlag.invoice_id == models.Invoice.id)
+        .join(models.Client, models.Invoice.client_id == models.Client.id)
+        .filter(models.DuplicateFlag.id == flag_id, models.Client.owner_id == user.id)
+        .first()
+    )
     if not flag:
         raise HTTPException(status_code=404, detail="Flag not found")
     if flag.status != "pending":

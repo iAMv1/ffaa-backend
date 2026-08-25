@@ -1,0 +1,243 @@
+{
+  "image": "C:\\Users\\ItzP\\ffaa\\ffaa-backend\\bench\\testing\\indian_data\\train_0.jpg",
+  "provider": "gemini-api",
+  "result": {
+    "summary": "Tax Invoice issued by AC DRIVES & TECHNOLOGY PVT. LTD. to SAMYAK INSTRUMENTATION PVT. LTD. dated 22-Oct-2021 for an amount of INR 10,667.00.",
+    "ocr": {
+      "full_text": "AC DRIVES & TECHNOLOGY PVT. LTD. (21-22)\nRegd. Office : A-10, GALLOPS INDUSTRIAL PARK-2, SARKHEJ-BAVLA HIGHWAY ROAD,, AT & PO : RAJODA, TA : BAVLA, DIST : AHMEDABAD - 382220, CIN: U29253EJ2013PTC075998, E-Mail : account@drivesindia.com\nPAN No. : AALCA7978B GST No : 24AALCA7978B1ZI State : Gujarat, State Code : (24)\nTax Invoice (Original)\nBUYER\nSAMYAK INSTRUMENTATION PVT. LTD.\nF-4, MEMNAGAR COMPLEX, OPP. IOCL PETROL PUMP, MEMNAGAR GAM, AHMEDABAD - 380052\nPan No : AAECS6597H\nGST No : 24AAECS6597H1ZY\nPlace of Supply: Gujarat\nCONSIGNEE\nSAMYAK INSTRUMENTATION PVT. LTD.\nF-4, MEMNAGAR COMPLEX, OPP. IOCL PETROL PUMP, MEMNAGAR GAM, AHMEDABAD - 380052\nPan No : AAECS6597H\nGST No : 24AAECS6597H1ZY\nPlace of Supply: Gujarat\nINVOICE NO. : 1325\nINVOICE DATE : 22-Oct-2021\nCHALLAN NO. : 1325\nCHALLAN DATE : 22-Oct-2021\nORDER NO. : ACDT/067\nORDER DATE : 19-Oct-2021\nSr. No. | Description of Goods | HSN Code | Quantity In Qty | Rate In Qty | Amount\n1 | DISPLAY UNIT 4.3\" GH043-= | 8543 | 1 | 9,000.00 | 9,000.00\n2 | FREIGHT CHARGES- m4220te | 8504 | | | 40.00\nTotal : 1 | 9,040.00\nS = GST | 813.60\nC = GST | 813.60\nROUND OFF A/C. | (-)0.20\nGRAND TOTAL | 10,667.00\nMode of Transport : Vehical Reg. No. :\nGoods Despatch From : AHMEDABAD To MEMNAGAR GAM\nTransport : SHREE ANJANI COURIER L. R. No. :\nTotal Amount in Words : TEN THOUSAND SIX HUNDRED SIXTY SEVEN ONLY.\nTax Amount (in words) : INR One Thousand Six Hundred Twenty Seven and Twenty Paise Only\nDue Date : 22-Oct-2021\nFor, AC DRIVES & TECHNOLOGY PVT. LTD. (21-22)",
+      "lines": [
+        {
+          "text": "AC DRIVES & TECHNOLOGY PVT. LTD. (21-22)"
+        },
+        {
+          "text": "Regd. Office : A-10, GALLOPS INDUSTRIAL PARK-2, SARKHEJ-BAVLA HIGHWAY ROAD,, AT & PO : RAJODA,"
+        },
+        {
+          "text": "TA : BAVLA, DIST : AHMEDABAD - 382220, CIN: U29253EJ2013PTC075998, E-Mail : account@drivesindia.com"
+        },
+        {
+          "text": "PAN No. : AALCA7978B GST No : 24AALCA7978B1ZI State : Gujarat, State Code : (24)"
+        },
+        {
+          "text": "Tax Invoice (Original)"
+        },
+        {
+          "text": "BUYER"
+        },
+        {
+          "text": "SAMYAK INSTRUMENTATION PVT. LTD."
+        },
+        {
+          "text": "F-4, MEMNAGAR COMPLEX, OPP. IOCL PETROL PUMP, MEMNAGAR GAM, AHMEDABAD - 380052"
+        },
+        {
+          "text": "Pan No : AAECS6597H"
+        },
+        {
+          "text": "GST No : 24AAECS6597H1ZY"
+        },
+        {
+          "text": "Place of Supply: Gujarat"
+        },
+        {
+          "text": "CONSIGNEE"
+        },
+        {
+          "text": "SAMYAK INSTRUMENTATION PVT. LTD."
+        },
+        {
+          "text": "F-4, MEMNAGAR COMPLEX, OPP. IOCL PETROL PUMP, MEMNAGAR GAM, AHMEDABAD - 380052"
+        },
+        {
+          "text": "Pan No : AAECS6597H"
+        },
+        {
+          "text": "GST No : 24AAECS6597H1ZY"
+        },
+        {
+          "text": "Place of Supply: Gujarat"
+        },
+        {
+          "text": "INVOICE NO. : 1325"
+        },
+        {
+          "text": "INVOICE DATE : 22-Oct-2021"
+        },
+        {
+          "text": "CHALLAN NO. : 1325"
+        },
+        {
+          "text": "CHALLAN DATE : 22-Oct-2021"
+        },
+        {
+          "text": "ORDER NO. : ACDT/067"
+        },
+        {
+          "text": "ORDER DATE : 19-Oct-2021"
+        },
+        {
+          "text": "1 | DISPLAY UNIT 4.3\" GH043-= | 8543 | 1 | 9,000.00 | 9,000.00"
+        },
+        {
+          "text": "2 | FREIGHT CHARGES- m4220te | 8504 | | | 40.00"
+        },
+        {
+          "text": "Total : 1 | 9,040.00"
+        },
+        {
+          "text": "S = GST | 813.60"
+        },
+        {
+          "text": "C = GST | 813.60"
+        },
+        {
+          "text": "ROUND OFF A/C. | (-)0.20"
+        },
+        {
+          "text": "GRAND TOTAL | 10,667.00"
+        },
+        {
+          "text": "Total Amount in Words : TEN THOUSAND SIX HUNDRED SIXTY SEVEN ONLY."
+        },
+        {
+          "text": "Tax Amount (in words) : INR One Thousand Six Hundred Twenty Seven and Twenty Paise Only"
+        }
+      ]
+    },
+    "layout": {
+      "regions": [
+        {
+          "type": "title",
+          "reading_order": 1,
+          "text": "AC DRIVES & TECHNOLOGY PVT. LTD. (21-22)"
+        },
+        {
+          "type": "paragraph",
+          "reading_order": 2,
+          "text": "Regd. Office : A-10, GALLOPS INDUSTRIAL PARK-2, SARKHEJ-BAVLA HIGHWAY ROAD,, AT & PO : RAJODA, TA : BAVLA, DIST : AHMEDABAD - 382220, CIN: U29253EJ2013PTC075998, E-Mail : account@drivesindia.com\nPAN No. : AALCA7978B GST No : 24AALCA7978B1ZI State : Gujarat, State Code : (24)"
+        },
+        {
+          "type": "subtitle",
+          "reading_order": 3,
+          "text": "Tax Invoice (Original)"
+        },
+        {
+          "type": "form",
+          "reading_order": 4,
+          "text": "BUYER: SAMYAK INSTRUMENTATION PVT. LTD., F-4, MEMNAGAR COMPLEX, OPP. IOCL PETROL PUMP, MEMNAGAR GAM, AHMEDABAD - 380052, Pan No : AAECS6597H, GST No : 24AAECS6597H1ZY, Place of Supply: Gujarat\nCONSIGNEE: SAMYAK INSTRUMENTATION PVT. LTD., F-4, MEMNAGAR COMPLEX, OPP. IOCL PETROL PUMP, MEMNAGAR GAM, AHMEDABAD - 380052, Pan No : AAECS6597H, GST No : 24AAECS6597H1ZY, Place of Supply: Gujarat\nINVOICE NO. : 1325, INVOICE DATE : 22-Oct-2021, CHALLAN NO. : 1325, CHALLAN DATE : 22-Oct-2021, ORDER NO. : ACDT/067, ORDER DATE : 19-Oct-2021"
+        },
+        {
+          "type": "table",
+          "reading_order": 5,
+          "text": "Description of Goods and Charges Table"
+        },
+        {
+          "type": "table",
+          "reading_order": 6,
+          "text": "HSN/SAC Tax Calculation Table"
+        },
+        {
+          "type": "paragraph",
+          "reading_order": 7,
+          "text": "Declaration and Signatures"
+        }
+      ]
+    },
+    "semantics": {
+      "scene": "document",
+      "intent": "tax invoice for goods and services",
+      "entities": [
+        {
+          "name": "AC DRIVES & TECHNOLOGY PVT. LTD.",
+          "type": "seller",
+          "evidence": "AC DRIVES & TECHNOLOGY PVT. LTD. (21-22)"
+        },
+        {
+          "name": "SAMYAK INSTRUMENTATION PVT. LTD.",
+          "type": "buyer",
+          "evidence": "BUYER SAMYAK INSTRUMENTATION PVT. LTD."
+        },
+        {
+          "name": "1325",
+          "type": "invoice_number",
+          "evidence": "INVOICE NO. : 1325"
+        },
+        {
+          "name": "22-Oct-2021",
+          "type": "invoice_date",
+          "evidence": "INVOICE DATE : 22-Oct-2021"
+        },
+        {
+          "name": "10,667.00",
+          "type": "grand_total",
+          "evidence": "GRAND TOTAL 10,667.00"
+        },
+        {
+          "name": "24AALCA7978B1ZI",
+          "type": "seller_gstin",
+          "evidence": "GST No : 24AALCA7978B1ZI"
+        },
+        {
+          "name": "24AAECS6597H1ZY",
+          "type": "buyer_gstin",
+          "evidence": "GST No : 24AAECS6597H1ZY"
+        }
+      ],
+      "relations": [
+        {
+          "subject": "AC DRIVES & TECHNOLOGY PVT. LTD.",
+          "predicate": "issued",
+          "object": "Tax Invoice"
+        },
+        {
+          "subject": "Tax Invoice",
+          "predicate": "issued_to",
+          "object": "SAMYAK INSTRUMENTATION PVT. LTD."
+        }
+      ]
+    },
+    "visual": {
+      "dominant_colors": [
+        "white",
+        "black"
+      ],
+      "style": "printed document with blue ink stamps and handwritten annotations",
+      "notes": [
+        "Document has received stamp from Samyak Instrumentation dated 23/10/21",
+        "Pen marks and signatures present at the bottom and sides"
+      ]
+    },
+    "uncertainty": []
+  },
+  "meta": {
+    "generatedAt": "2026-08-10T13:14:02.100Z",
+    "model": "gemini-3.6-flash",
+    "conversationId": null,
+    "durationSeconds": 21.15,
+    "usage": {
+      "promptTokenCount": 1229,
+      "candidatesTokenCount": 2324,
+      "totalTokenCount": 4873,
+      "promptTokensDetails": [
+        {
+          "modality": "TEXT",
+          "tokenCount": 127
+        },
+        {
+          "modality": "IMAGE",
+          "tokenCount": 1102
+        }
+      ],
+      "thoughtsTokenCount": 1320,
+      "serviceTier": "standard"
+    },
+    "attempts": [
+      {
+        "provider": "gemini-api",
+        "ok": true,
+        "durationSeconds": 21.155
+      }
+    ],
+    "warnings": []
+  }
+}

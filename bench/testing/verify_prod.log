@@ -1,0 +1,92 @@
+k_000.png: total=45226.44/45226.44 comp='Emami Limited' (7.0s)
+k_001.png: total=101544.34/101544.34 comp='Amul (GCMMF)' (9.4s)
+k_002.png: total=61014.94/61014.94 comp='Hindustan Unilever L' (5.8s)
+k_003.png: total=21891.09/21891.09 comp='Hindustan Unilever L' (14.2s)
+k_004.png: total=114610.89/114610.89 comp='ITC Limited' (11.3s)
+k_005.png: total=66895.1/66895.1 comp='Godrej Consumer Prod' (7.2s)
+k_006.png: total=43844.33/43844.33 comp='Britannia Industries' (7.6s)
+k_007.png: total=67912.31/67912.31 comp='Amul(GCMMF)' (5.2s)
+k_008.png: total=31837.65/31837.65 comp='Britannia Industries' (7.2s)
+k_009.png: total=58793.63/58793.63 comp='Parle Products Pvt L' (6.5s)
+k_010.png: total=85465.59/85465.59 comp='Emami Limited' (9.0s)
+k_011.png: total=40643.37/40643.37 comp='ITC Limited' (4.6s)
+k_012.png: total=62965.17/62965.17 comp='ITC Limited' (7.6s)
+k_013.png: total=68576.19/68576.19 comp='Marico Limited' (9.4s)
+k_014.png: total=36244.23/36244.23 comp='Emami Limited' (5.7s)
+k_015.png: total=24431.26/24431.26 comp='New India Kirana' (6.5s)
+k_016.png: total=47961.56/47961.56 comp='Ganesh Traders' (7.3s)
+k_017.png: total=81252.62/81252.62 comp='Britannia Industries' (17.6s)
+k_018.png: total=121038.22/121038.22 comp='Marico Limited' (10.7s)
+k_019.png: total=54274.32/54274.32 comp='Britannia Industries' (7.8s)
+k_020.png: total=72690.16/72690.16 comp='Ravi Provision Store' (6.4s)
+k_021.png: total=55964.49/55964.49 comp='Parle Products Pvt L' (6.7s)
+k_022.png: total=29713.49/29713.49 comp='Britannia Industries' (4.6s)
+k_023.png: total=83072.74/83072.74 comp='Sharma Brothers Trad' (8.8s)
+k_024.png: total=37850.38/37850.38 comp='Ravi Provision Store' (6.1s)
+k_025.png: total=94908.69/94908.69 comp='Murugan General Stor' (7.6s)
+k_026.png: total=48485.6/48485.6 comp='Marico Limited' (4.7s)
+k_027.png: total=68300.65/68300.65 comp='Hindustan Unilever L' (5.2s)
+k_028.png: total=74182.26/74182.26 comp='Hindustan Unilever L' (7.1s)
+k_029.png: total=67219.48/67219.48 comp='Amul (GCMMF)' (5.1s)
+k_030.png: total=65821.19/65821.19 comp='Sri Lakshmi Kirana' (6.7s)
+k_031.png: total=45251.05/45251.05 comp='Murugan General Stor' (5.7s)
+k_032.png: total=109530.65/109530.65 comp='Nev India Kizana' (8.0s)
+k_033.png: total=58460.01/58460.01 comp='Emami Limited' (4.9s)
+k_034.png: total=84135.31/84135.31 comp='Sri Lakshmi Kizana' (8.1s)
+k_035.png: total=91129.14/91129.14 comp='Dabur India Ltd' (6.9s)
+k_036.png: total=64089.3/64089.3 comp='Sharma Brothers Trad' (4.6s)
+k_037.png: total=104796.84/104796.84 comp='Nev India Kizana' (7.0s)
+k_038.png: total=117493.44/117493.44 comp='Parle Products Pvt L' (8.8s)
+k_039.png: total=24165.07/24165.07 comp='Dabur India Ltd' (4.0s)
+k_040.png: total=65410.69/65410.69 comp='Amul(GCMMF)' (4.1s)
+k_041.png: total=35742.29/35742.29 comp='Nestle India Ltd' (3.6s)
+k_042.png: total=74134.06/74134.06 comp='Sharma Brothers Trad' (7.5s)
+k_043.png: total=14486.17/14486.17 comp='Nestle India Ltd' (4.3s)
+k_044.png: total=61884.29/61884.29 comp='Marico Limited' (5.5s)
+k_045.png: total=42634.66/42634.66 comp='Marico Limited' (3.8s)
+k_046.png: total=48331.52/48331.52 comp='Emami Limited' (4.4s)
+k_047.png: total=87185.6/87185.6 comp='Marico Limited' (7.5s)
+k_048.png: total=55032.29/55032.29 comp='Murugan General Stor' (5.3s)
+k_049.png: total=47247.23/47247.23 comp='Hindustan Unilever L' (4.8s)
+
+== kirana n=50 == total=50/50 supplier=36/50 date=48/50 avg=6.9s
+train_0.jpg: 10667.0 'AC DRIVES & TECHNOLO' (18.7s)
+train_1.jpg: 17051.0 '(ORIGINALFORRECIPIEN' (16.3s)
+train_10.jpg: 17051.0 '(ORIGINALFORRECIPIEN' (12.3s)
+train_11.jpg: 15009.6 '(ORIGINALFORRECIPIEN' (19.2s)
+train_12.jpg: 16520.0 '(ORIGINALFORRECIPIEN' (17.3s)
+train_13.jpg: 8000.4 '(ORIGINALFORRECIPIEN' (17.7s)
+train_14.jpg: 5947.2 '(ORIGINALFORRECIPIEN' (20.0s)
+train_15.jpg: 20041.12 '(ORIGINALFORRECIPIEN' (32.9s)
+train_16.jpg: 4218.5 '(ORIGINALFORRECIPIEN' (18.1s)
+train_17.jpg: 6301.2 '(ORIGINALFORRECIPIEN' (16.8s)
+train_2.jpg: 15009.6 '(ORIGINALFORRECIPIEN' (14.3s)
+train_3.jpg: 16520.0 '(ORIGINALFORRECIPIEN' (14.6s)
+train_4.jpg: 8000.4 '(ORIGINALFORRECIPIEN' (23.0s)
+train_5.jpg: 5947.2 '(ORIGINALFORRECIPIEN' (26.6s)
+train_6.jpg: 20041.12 '(ORIGINALFORRECIPIEN' (18.4s)
+train_7.jpg: 4218.5 '(ORIGINALFORRECIPIEN' (27.9s)
+train_8.jpg: 6301.2 '(ORIGINALFORRECIPIEN' (17.2s)
+train_9.jpg: 10667.0 'AC DRIVES & TECHNOLO' (25.0s)
+val_0.jpg: 16661.6 '(ORIGINALFORRECIPIEN' (30.9s)
+val_1.jpg: 16661.6 '(ORIGINALFORRECIPIEN' (27.2s)
+
+== kenil n=20 == total=0/20 supplier=0/20 date=0/20 avg=20.7s
+ReduceMeanCheckIfOneDNNSupport
+ReduceMeanCheckIfOneDNNSupport
+ReduceMeanCheckIfOneDNNSupport
+ReduceMeanCheckIfOneDNNSupport
+ReduceMeanCheckIfOneDNNSupport
+ReduceMeanCheckIfOneDNNSupport
+ReduceMeanCheckIfOneDNNSupport
+ReduceMeanCheckIfOneDNNSupport
+ReduceMeanCheckIfOneDNNSupport
+ReduceMeanCheckIfOneDNNSupport
+ReduceMeanCheckIfOneDNNSupport
+X510056849111.jpg: None 'WESIERN EASTERN' (87.5s)
+X51009008095.jpg: None 'BOON SENG PAPER SDN ' (88.6s)
+X51009447842.jpg: None 'PASARAYA BORONG PINT' (170.3s)
+X51009453729.jpg: 100.0 '(162761-M)' (11.3s)
+X51009568881.jpg: None 'HON HWA HARDWARE TRA' (156.5s)
+
+== sroie n=5 == total=0/5 supplier=0/5 date=0/5 avg=102.8s

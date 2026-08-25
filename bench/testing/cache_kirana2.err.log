@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "C:\Users\ItzP\ffaa\ffaa-backend\bench\testing\cache_kirana.py", line 17, in <module>
+    text, items = extract_text_and_items(p)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ItzP\ffaa\ffaa-backend\bench\testing\rapid_engine.py", line 131, in extract_text_and_items
+    items = _items_from_word_lines(_cluster_lines(words))
+                                   ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\ItzP\ffaa\ffaa-backend\bench\testing\rapid_engine.py", line 32, in _cluster_lines
+    gaps = [ys[i + 1] - ys[i] for i in range(len(ys) - 1) if ys[i + 1] > ys[i]]
+            ~~~~~~~~~~^~~~~~~
+TypeError: unsupported operand type(s) for -: 'list' and 'list'

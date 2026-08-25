@@ -1,0 +1,72 @@
+{
+ "invoice_number": "INV/2025-26/62797",
+ "supplier": "Emami Limited",
+ "date": "2024-10-15",
+ "items": [
+  {
+   "product_raw": "ASHIRWAAD ATTA 1KG",
+   "quantity": 16,
+   "unit_price": 567.73,
+   "gst_rate": 5,
+   "line_total": 9537.86
+  },
+  {
+   "product_raw": "Britannia Marie Light 200g",
+   "quantity": 20,
+   "unit_price": 332.31,
+   "gst_rate": 18,
+   "line_total": 7842.52
+  },
+  {
+   "product_raw": "AMUL LITE BUTR 100",
+   "quantity": 8,
+   "unit_price": 141.23,
+   "gst_rate": 12,
+   "line_total": 1265.42
+  },
+  {
+   "product_raw": "HORLICKS 500G",
+   "quantity": 29,
+   "unit_price": 20.64,
+   "gst_rate": 18,
+   "line_total": 706.3
+  },
+  {
+   "product_raw": "REAL ORG 1L",
+   "quantity": 5,
+   "unit_price": 299.19,
+   "gst_rate": 12,
+   "line_total": 1675.46
+  },
+  {
+   "product_raw": "TRESEMME 185ML",
+   "quantity": 13,
+   "unit_price": 8.94,
+   "gst_rate": 18,
+   "line_total": 137.14
+  },
+  {
+   "product_raw": "CLN PLUS 175ML",
+   "quantity": 18,
+   "unit_price": 117.5,
+   "gst_rate": 18,
+   "line_total": 2495.7
+  },
+  {
+   "product_raw": "SLICE 600ML",
+   "quantity": 43,
+   "unit_price": 379.16,
+   "gst_rate": 12,
+   "line_total": 18260.35
+  },
+  {
+   "product_raw": "MAAZA MANGO 250",
+   "quantity": 45,
+   "unit_price": 328.16,
+   "gst_rate": 12,
+   "line_total": 16539.26
+  }
+ ],
+ "grand_total": 58460.01,
+ "extraction_warnings": []
+}

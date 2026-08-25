@@ -1,0 +1,24 @@
+ReduceMeanCheckIfOneDNNSupport
+ReduceMeanCheckIfOneDNNSupport
+ReduceMeanCheckIfOneDNNSupport
+ReduceMeanCheckIfOneDNNSupport
+ReduceMeanCheckIfOneDNNSupport
+ReduceMeanCheckIfOneDNNSupport
+ReduceMeanCheckIfOneDNNSupport
+ReduceMeanCheckIfOneDNNSupport
+ReduceMeanCheckIfOneDNNSupport
+ReduceMeanCheckIfOneDNNSupport
+ReduceMeanCheckIfOneDNNSupport
+clean_print       9/12 items 0.00 conf 1.00 152.3s miss=igst,quantity,item_description
+two_col           9/12 items 0.00 conf 1.00  56.3s miss=igst,quantity,item_description
+low_contrast      9/12 items 0.00 conf 1.00  57.4s miss=igst,quantity,item_description
+skewed            9/12 items 0.00 conf 1.00  61.5s miss=igst,quantity,item_description
+noisy             9/12 items 0.00 conf 1.00  55.7s miss=igst,quantity,item_description
+rotated90         9/12 items 0.00 conf 1.00  50.6s miss=igst,quantity,item_description
+table_only        9/12 items 0.00 conf 1.00  62.8s miss=igst,quantity,item_description
+small_font        9/12 items 0.00 conf 1.00  66.4s miss=igst,quantity,item_description
+shadow_band       6/12 items 0.00 conf 0.70  50.8s miss=gst_rate,total_amount,igst,hsn_code,quantity,item_description
+merged_cells      9/12 items 0.00 conf 1.00  51.6s miss=igst,quantity,item_description
+
+== app.ocr == fields 87/120 (0.725) items 0/24 (0.000) overall 0.507 avg_conf 0.97
+saved C:\Users\ItzP\ffaa\ffaa-backend\bench\result_ocr.json

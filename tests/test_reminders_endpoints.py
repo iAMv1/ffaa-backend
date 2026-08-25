@@ -16,6 +16,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 TEST_DB_PATH = (Path(__file__).parent / "test_ffaa.db").as_posix()
 os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB_PATH}"
 
+import uuid
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -40,15 +42,45 @@ def clean_db():
     models.Base.metadata.drop_all(bind=engine)
 
 
+@pytest.fixture(autouse=True)
+def _disable_rate_limiter():
+    app.state.limiter.enabled = False
+    yield
+    app.state.limiter.enabled = True
+
+
+TEST_PASSWORD = "T3st-Passw0rd!"
+_current_owner = [None]  # set per-test by the authed `client` fixture
+
+
 @pytest.fixture
 def client():
-    return TestClient(app)
+    """Authenticated TestClient for one fresh tenant."""
+    c = TestClient(app)
+    email = f"u-{uuid.uuid4().hex}@example.com"
+    r = c.post("/api/v1/auth/register", json={"email": email, "password": TEST_PASSWORD})
+    assert r.status_code == 201, r.text
+    r = c.post("/api/v1/auth/login", data={"username": email, "password": TEST_PASSWORD})
+    assert r.status_code in (200, 204), r.text
+    db = SessionLocal()
+    try:
+        u = db.query(models.User).filter(models.User.email == email).first()
+        assert u is not None
+        _current_owner[0] = u.id
+    finally:
+        db.close()
+    yield c
+    _current_owner[0] = None
 
 
 def _make_client(name, email=None):
+    # owned by the fixture's tenant so API reads can see it
     db = SessionLocal()
     try:
-        c = models.Client(name=name, email=email, created_at=datetime.now())
+        c = models.Client(
+            name=name, email=email, owner_id=_current_owner[0],
+            created_at=datetime.now(),
+        )
         db.add(c)
         db.commit()
         db.refresh(c)

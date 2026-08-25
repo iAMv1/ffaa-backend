@@ -1,0 +1,44 @@
+{
+ "invoice_number": "TAX/2025-26/91674",
+ "supplier": "Nestle India Ltd",
+ "date": "2025-02-27",
+ "items": [
+  {
+   "product_raw": "DETTOL HW 250ML",
+   "quantity": 10,
+   "unit_price": 185.73,
+   "gst_rate": 18,
+   "line_total": 2191.61
+  },
+  {
+   "product_raw": "COMPLAN 500G",
+   "quantity": 4,
+   "unit_price": 53.33,
+   "gst_rate": 18,
+   "line_total": 251.72
+  },
+  {
+   "product_raw": "GLOW LOVELY 50G",
+   "quantity": 4,
+   "unit_price": 63.39,
+   "gst_rate": 18,
+   "line_total": 299.2
+  },
+  {
+   "product_raw": "GLUCOSE 250G",
+   "quantity": 38,
+   "unit_price": 257.1,
+   "gst_rate": 18,
+   "line_total": 11528.36
+  },
+  {
+   "product_raw": "FRUTI 500ML",
+   "quantity": 3,
+   "unit_price": 64.07,
+   "gst_rate": 12,
+   "line_total": 215.28
+  }
+ ],
+ "grand_total": 14486.17,
+ "extraction_warnings": []
+}

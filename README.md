@@ -30,13 +30,22 @@ python -m uvicorn app.main:app --reload --port 8000
 
 API docs: http://localhost:8000/docs
 
-## Security posture
+## Security posture (updated for P1 multi-tenant)
 
-FFAA is a **single-user, localhost-only tool**. Every endpoint is unauthenticated — including destructive ones
-(`DELETE /clients/{id}` cascades invoices, bank rows, flags, reminders) and outbound email (send-reminder).
-CORS is pinned to the vite dev origins, and the compose file publishes ports bound to `127.0.0.1` only.
-Do not expose FFAA ports beyond localhost; if you ever need remote access, put it behind an authenticating
-reverse proxy and add real auth first.
+**Auth now exists.** fastapi-users backs `/api/v1/auth` (register / login /
+logout / forgot-password / reset-password) with JWT-in-httpOnly-cookie
+(`ffaaauth`, `samesite=lax`; no token storage in JS). Every tenant endpoint
+requires a logged-in user and is scoped to that user's data (`Client.owner_id`;
+404 — not 403 — on other tenants' resources). Rate limits via slowapi:
+register 5/h/IP, login 10/h/IP, forgot-password 3/h/IP.
+
+Set `FFAA_SECRET` in production (JWT/reset-token signing); `FFAA_COOKIE_SECURE=true`
+behind https. The operator account comes from `scripts/migrate_multi_tenant.py`
+(email from `FFAA_OPERATOR_EMAIL`, one-time password in `data/operator_credentials.txt`).
+
+The localhost posture is retained for dev: CORS pinned to the vite dev origins,
+compose ports bound to `127.0.0.1`. Do not expose FFAA beyond localhost without
+a reverse proxy; billing entitlement caps (free-plan limits) land in P4.
 
 ## OCR (RapidOCR primary, PaddleOCR fallback)
 

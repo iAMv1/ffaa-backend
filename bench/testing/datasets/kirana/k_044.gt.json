@@ -1,0 +1,58 @@
+{
+ "invoice_number": "GST/2024-25/17011",
+ "supplier": "Marico Limited",
+ "date": "2025-03-06",
+ "items": [
+  {
+   "product_raw": "GD DF 150G",
+   "quantity": 24,
+   "unit_price": 324.47,
+   "gst_rate": 18,
+   "line_total": 9188.99
+  },
+  {
+   "product_raw": "AMUL PURE GHE 500",
+   "quantity": 38,
+   "unit_price": 358.35,
+   "gst_rate": 12,
+   "line_total": 15251.38
+  },
+  {
+   "product_raw": "CLINIC+ 175ML",
+   "quantity": 42,
+   "unit_price": 54.74,
+   "gst_rate": 18,
+   "line_total": 2712.91
+  },
+  {
+   "product_raw": "YIPPEE MAGIC 70G",
+   "quantity": 18,
+   "unit_price": 23.44,
+   "gst_rate": 18,
+   "line_total": 497.87
+  },
+  {
+   "product_raw": "Comfort Fabric Conditioner 220ml",
+   "quantity": 29,
+   "unit_price": 456.66,
+   "gst_rate": 18,
+   "line_total": 15626.91
+  },
+  {
+   "product_raw": "LUX SOAP 100G",
+   "quantity": 44,
+   "unit_price": 181.38,
+   "gst_rate": 18,
+   "line_total": 9417.25
+  },
+  {
+   "product_raw": "GD DF 150G",
+   "quantity": 24,
+   "unit_price": 324.47,
+   "gst_rate": 18,
+   "line_total": 9188.99
+  }
+ ],
+ "grand_total": 61884.29,
+ "extraction_warnings": []
+}

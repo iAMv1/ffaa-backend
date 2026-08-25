@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session, joinedload
 from .. import models
 from ..database import SessionLocal
 from ..tally import invoices_to_tally_xml
+from ..users import current_active_user
 
 router = APIRouter()
 
@@ -22,10 +23,14 @@ def export_tally(
     client_id: int | None = Query(None),
     approved_only: bool = Query(True),
     db: Session = Depends(get_db),
+    user: models.User = Depends(current_active_user),
 ):
-    q = db.query(models.Invoice).options(joinedload(models.Invoice.items))
-    if client_id is not None:
-        q = q.filter(models.Invoice.client_id == client_id)
+    q = (
+        db.query(models.Invoice)
+        .options(joinedload(models.Invoice.items))
+        .join(models.Client, models.Invoice.client_id == models.Client.id)
+        .filter(models.Client.owner_id == user.id)
+    )
     if approved_only:
         q = q.filter(models.Invoice.approved == True)  # noqa: E712
     # ponytail: exclude accepted duplicates

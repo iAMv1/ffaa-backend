@@ -1,0 +1,58 @@
+{
+ "invoice_number": "GST/2025-26/74798",
+ "supplier": "Marico Limited",
+ "date": "2024-12-02",
+ "items": [
+  {
+   "product_raw": "CLZ UP 150G",
+   "quantity": 22,
+   "unit_price": 336.25,
+   "gst_rate": 18,
+   "line_total": 8729.05
+  },
+  {
+   "product_raw": "FANTA 250ML",
+   "quantity": 42,
+   "unit_price": 265.1,
+   "gst_rate": 28,
+   "line_total": 14251.78
+  },
+  {
+   "product_raw": "CMFT FAB 220ML",
+   "quantity": 41,
+   "unit_price": 331.29,
+   "gst_rate": 18,
+   "line_total": 16027.81
+  },
+  {
+   "product_raw": "FRUTI 200ML",
+   "quantity": 13,
+   "unit_price": 75.87,
+   "gst_rate": 12,
+   "line_total": 1104.67
+  },
+  {
+   "product_raw": "BRU COFFEE 50G",
+   "quantity": 20,
+   "unit_price": 96.91,
+   "gst_rate": 5,
+   "line_total": 2035.11
+  },
+  {
+   "product_raw": "Britannia Marie Light 200g",
+   "quantity": 12,
+   "unit_price": 132.67,
+   "gst_rate": 18,
+   "line_total": 1878.61
+  },
+  {
+   "product_raw": "LX SOAP 150",
+   "quantity": 23,
+   "unit_price": 405.5,
+   "gst_rate": 18,
+   "line_total": 11005.27
+  }
+ ],
+ "grand_total": 55032.29,
+ "extraction_warnings": []
+}
