@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 from .database import SessionLocal
 from . import models
 from .services import attempt_reminder, missing_docs
+from . import billing
 
 
 def main() -> None:
@@ -27,16 +28,16 @@ def main() -> None:
     db = SessionLocal()
     sent = failed = skipped = 0
     try:
-        # Skip tenants whose owner account is deactivated.
-        # TODO(P4): gate on active plan — skip free-expired tenants here too
-        # (plan rev #4). Global SMTP stays v1; per-user SMTP deferred.
+        # Plan rev #4: skip tenants whose owner's billing period has lapsed
+        # (expired pro decays to gated free). Global SMTP stays v1; per-user
+        # SMTP deferred. billing.plan_is_active() is the single gate.
         clients = (
             db.query(models.Client)
             .join(models.User, models.User.id == models.Client.owner_id)
             .filter(models.User.is_active == True)  # noqa: E712
             .all()
         )
-        for c in clients:
+        for c in (c for c in clients if billing.plan_is_active(db, c.owner_id)):
             docs = missing_docs(db, c.id, since)
             if not docs:
                 skipped += 1

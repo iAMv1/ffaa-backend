@@ -83,7 +83,7 @@ def send_client_reminder(
     db: Session = Depends(get_db),
     user: models.User = Depends(current_active_user),
 ):
-    require_entitlement(user, "reminder_send")  # TODO(P4): real caps
+    require_entitlement(db, user, "reminder_send")
     client = get_owned_client(db, user, client_id)
 
     days = send.days if send.days is not None else 30

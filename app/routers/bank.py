@@ -37,6 +37,7 @@ def upload_bank(
     user: models.User = Depends(current_active_user),
 ):
     client = get_owned_client(db, user, client_id)
+    require_entitlement(db, user, "bank_upload")
     max_bytes = int(os.environ.get("MAX_FILE_SIZE_MB", "50")) * 1024 * 1024
     if file.size is not None and file.size > max_bytes:
         raise HTTPException(
@@ -226,7 +227,7 @@ def run_reconcile(
     db: Session = Depends(get_db),
     user: models.User = Depends(current_active_user),
 ):
-    require_entitlement(user, "reconcile_run")  # TODO(P4): real caps
+    require_entitlement(db, user, "reconcile_run")
     get_owned_client(db, user, client_id)
     invoices = (
         db.query(models.Invoice)

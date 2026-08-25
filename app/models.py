@@ -136,3 +136,38 @@ class User(SQLAlchemyBaseUserTable[int], Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True)
     created_at = Column(DateTime, default=datetime.now)
+
+
+# --- Billing (P4 Razorpay) -----------------------------------------------------
+
+class BillingPlan(Base):
+    __tablename__ = "billing_plans"
+    code = Column(String(50), primary_key=True)  # 'free' / 'pro'
+    name = Column(String(100))
+    price_rupees = Column(Integer, default=0)
+    # NULL cap = unlimited (pro).
+    invoice_cap = Column(Integer, nullable=True)
+    client_cap = Column(Integer, nullable=True)
+    features_json = Column(Text, default="[]")
+
+
+class BillingSubscription(Base):
+    __tablename__ = "billing_subscriptions"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True)
+    plan_code = Column(String(50), default="free")
+    status = Column(String(20), default="active")  # active / expired
+    current_period_end = Column(DateTime)
+    updated_at = Column(DateTime)
+
+
+class BillingPayment(Base):
+    __tablename__ = "billing_payments"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    razorpay_order_id = Column(String(100), index=True)
+    # UNIQUE: the idempotency anchor — verify + webhook may race/replay (rev #6).
+    razorpay_payment_id = Column(String(100), unique=True)
+    amount_rupees = Column(Integer, default=0)
+    status = Column(String(20), default="created")  # created / paid / failed
+    created_at = Column(DateTime)

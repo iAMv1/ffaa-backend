@@ -47,6 +47,23 @@ The localhost posture is retained for dev: CORS pinned to the vite dev origins,
 compose ports bound to `127.0.0.1`. Do not expose FFAA beyond localhost without
 a reverse proxy; billing entitlement caps (free-plan limits) land in P4.
 
+## Billing (P4 Razorpay)
+
+- Plans: **Free** ₹0 (10 invoices/mo, 1 client) and **Pro** ₹499/mo (unlimited),
+  seeded idempotently on startup into `billing_plans`.
+- Entitlement: every write/compute endpoint (invoice upload, bank upload,
+  client create + OCR auto-mint, reconcile, duplicate scan, reminder send)
+  goes through `require_entitlement` — over-cap free usage gets `402` with an
+  `{upgrade: true}` payload; reads stay free.
+- Checkout: `POST /api/v1/billing/order` → Razorpay order → `POST .../verify`
+  (hmac signature) extends the subscription 30 days. `POST .../webhook`
+  verifies `payment.captured` over the RAW body (`x-razorpay-signature`)
+  before parsing. Credits are idempotent on `razorpay_payment_id` UNIQUE —
+  verify/webhook replays never double-extend.
+- Keys come from env (`RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`,
+  `RAZORPAY_WEBHOOK_SECRET`, see `.env.example`). Without keys the order
+  endpoint answers `503 payments not configured`.
+
 ## OCR (RapidOCR primary, PaddleOCR fallback)
 
 Promoted architecture (see `app/ocr.py` docstring + `bench/PROGRESS.md` for measured numbers):

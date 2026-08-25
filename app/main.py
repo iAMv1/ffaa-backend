@@ -6,13 +6,15 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from .database import Base, engine
-from .routers import invoices, clients, bank, tally, duplicates, reminders
+from .billing import seed_plans
 from .users import auth_router, register_router, reset_router, limiter, current_active_user, UserRead
+from .routers import invoices, clients, bank, tally, duplicates, reminders, billing as billing_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    seed_plans()  # idempotent free/pro catalog (P4)
     yield
 
 
@@ -48,6 +50,7 @@ app.include_router(bank.router, prefix="/api/v1")
 app.include_router(tally.router, prefix="/api/v1")
 app.include_router(duplicates.router, prefix="/api/v1")
 app.include_router(reminders.router, prefix="/api/v1")
+app.include_router(billing_router.router, prefix="/api/v1/billing")
 
 @app.get("/health")
 def health_check():

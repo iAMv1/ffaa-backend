@@ -25,7 +25,7 @@ def check_duplicates(
     db: Session = Depends(get_db),
     user: models.User = Depends(current_active_user),
 ):
-    require_entitlement(user, "duplicate_scan")  # TODO(P4): real caps
+    require_entitlement(db, user, "duplicate_scan")
     invoice = (
         db.query(models.Invoice)
         .join(models.Client, models.Invoice.client_id == models.Client.id)

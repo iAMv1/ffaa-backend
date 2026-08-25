@@ -24,7 +24,7 @@ def create_client(
     db: Session = Depends(get_db),
     user: models.User = Depends(current_active_user),
 ):
-    require_entitlement(user, "client_create")  # TODO(P4): real caps
+    require_entitlement(db, user, "client_create")
     # Uniqueness is per-owner now — another tenant's identical name must not leak.
     db_client = (
         db.query(models.Client)

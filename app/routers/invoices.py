@@ -76,7 +76,7 @@ def _save_invoice(
     db: Session,
     user: models.User,
 ) -> models.Invoice:
-    require_entitlement(user, "invoice_upload")  # TODO(P4): real caps
+    require_entitlement(db, user, "invoice_upload")
     if not file.filename:
         raise HTTPException(status_code=400, detail="No file provided")
 
@@ -119,8 +119,7 @@ def _save_invoice(
             .first()
         )
         if not client:
-            require_entitlement(user, "client_auto_mint")
-            # TODO(P4): enforce free-plan client cap here (402 + upgrade CTA).
+            require_entitlement(db, user, "client_auto_mint")
             client = models.Client(
                 name=company_name, auto_created=True, owner_id=user.id,
                 created_at=datetime.now(),
