@@ -29,9 +29,23 @@ from .database import SessionLocal
 from pydantic import BaseModel, EmailStr
 from .models import User
 
-# Dev default keeps local dev frictionless; .env.example documents FFAA_SECRET
-# and production MUST set it explicitly.
-FFAA_SECRET = os.environ.get("FFAA_SECRET", "dev-insecure-secret-change-me")
+# FFAA_SECRET is REQUIRED outside explicit dev mode (FFAA_DEV=1): a known
+# fallback key would let anyone forge auth cookies (audit finding AUTH-SECRET-FALLBACK).
+_DEV_MARKER = os.environ.get("FFAA_DEV", "").strip().lower() == "1"
+FFAA_SECRET = os.environ.get("FFAA_SECRET", "")
+if not FFAA_SECRET:
+    if _DEV_MARKER:
+        FFAA_SECRET = "dev-insecure-secret-change-me"
+    else:
+        raise RuntimeError(
+            "FFAA_SECRET is not set. Generate one (e.g. python -c \"import secrets; print(secrets.token_urlsafe(48))\") "
+            "and put it in .env — or set FFAA_DEV=1 for throwaway local runs."
+        )
+# Reset/verification tokens use DERIVED secrets, never the JWT key itself.
+import hashlib as _hashlib
+
+RESET_TOKEN_SECRET = _hashlib.sha256(b"reset:" + FFAA_SECRET.encode()).hexdigest()
+VERIFICATION_TOKEN_SECRET = _hashlib.sha256(b"verify:" + FFAA_SECRET.encode()).hexdigest()
 COOKIE_SECURE = os.environ.get("FFAA_COOKIE_SECURE", "false").strip().lower() == "true"
 
 limiter = Limiter(key_func=get_remote_address)
@@ -97,8 +111,8 @@ def get_user_db():
 
 
 class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
-    reset_password_token_secret = FFAA_SECRET
-    verification_token_secret = FFAA_SECRET
+    reset_password_token_secret = RESET_TOKEN_SECRET
+    verification_token_secret = VERIFICATION_TOKEN_SECRET
 
 
 async def get_user_manager(user_db=Depends(get_user_db)):

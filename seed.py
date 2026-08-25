@@ -63,10 +63,16 @@ REMINDERS = [
 
 def seed(db):
     now = datetime.now()
+    # Operator resolved by email, not hardcoded id (audit SEED-HARDCODED-OWNER).
+    operator = (
+        db.query(models.User)
+        .filter(models.User.email == os.environ.get("FFAA_OPERATOR_EMAIL", "operator@ffaa.local"))
+        .first()
+    )
+    owner_id = operator.id if operator else 1
     clients = []
     for c in CLIENTS:
-        # Operator account is id 1 (scripts/migrate_multi_tenant.py creates it).
-        client = models.Client(**c, owner_id=1, created_at=now)
+        client = models.Client(**c, owner_id=owner_id, created_at=now)
         db.add(client)
         clients.append(client)
     db.commit()

@@ -49,7 +49,15 @@ def require_entitlement(db: Session, user: "models.User", action: str) -> None:
     code = billing.effective_plan_code(db, user.id)
     plan = billing.get_plan(db, code)
     if plan is None:
-        return  # unseeded catalog — fail open rather than lock the app
+        # unseeded catalog — fail open rather than lock the app, but LOUDLY
+        # (audit TENANCY-FAIL-OPEN): an empty billing_plans table silently
+        # disables all caps, so make it visible in logs.
+        import logging
+
+        logging.getLogger("ffaa.tenancy").warning(
+            "billing_plans empty — entitlement caps UNENFORCED; run seed_plans()"
+        )
+        return
 
     cap_field = {
         "invoice_upload": "invoice_cap",

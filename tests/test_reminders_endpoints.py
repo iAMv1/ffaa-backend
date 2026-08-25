@@ -14,6 +14,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # same isolated test DB as test_smoke.py — set before app imports
 TEST_DB_PATH = (Path(__file__).parent / "test_ffaa.db").as_posix()
+os.environ.setdefault("FFAA_SECRET", "test-secret-do-not-use")
+os.environ.setdefault("FFAA_DEV", "1")
 os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB_PATH}"
 
 import uuid

@@ -175,18 +175,21 @@ def verify_payment(
         )
         .first()
     )
+    if order_row is None:
+        # Unknown/foreign order — never fabricate a credit (audit BILL-VERIFY-UNTRACKED-ORDER)
+        raise HTTPException(status_code=404, detail="Unknown order for this account")
     credited = billing.credit_payment(
         db,
         user_id=user.id,
         order_id=body.order_id,
         payment_id=body.payment_id,
-        amount_rupees=order_row.amount_rupees if order_row else None,
+        amount_rupees=order_row.amount_rupees,
     )
     sub = billing.get_subscription(db, user.id)
     return {
         "verified": True,
         "credited": credited,
-        "plan_code": "pro",
+        "plan_code": billing.effective_plan_code(db, user.id),
         "current_period_end": (
             sub.current_period_end.isoformat() if sub and sub.current_period_end else None
         ),
@@ -216,13 +219,20 @@ async def webhook(request: Request, db: Session = Depends(get_db)):
             .first()
         )
         if payment_id and order_row is not None:
-            # Same idempotent writer as /verify — webhook + verify race-safe.
-            billing.credit_payment(
-                db,
-                user_id=order_row.user_id,
-                order_id=order_id,
-                payment_id=payment_id,
-                amount_rupees=(entity.get("amount") or 0) // 100,
-            )
+            # Amount guard (audit BILL-WEBHOOK-AMOUNT): a partial/manual capture
+            # must never mint a full period. Compare paise against stored order.
+            captured_paise = entity.get("amount") or 0
+            if captured_paise < order_row.amount_rupees * 100:
+                order_row.status = "underpaid"
+                db.commit()
+            else:
+                # Same idempotent writer as /verify — webhook + verify race-safe.
+                billing.credit_payment(
+                    db,
+                    user_id=order_row.user_id,
+                    order_id=order_id,
+                    payment_id=payment_id,
+                    amount_rupees=order_row.amount_rupees,
+                )
     # Verified webhooks always 200, even for untracked events/orders.
     return {"status": "ok"}

@@ -76,11 +76,13 @@ def ensure_operator(engine, db) -> "models.User":
     db.refresh(user)
 
     creds_path = REPO_ROOT / "data" / "operator_credentials.txt"
-    creds_path.write_text(
-        f"{user.email} : {password}\n"
-        "(one-time password; rotate after first login)\n",
-        encoding="utf-8",
-    )
+    # 0o600 — owner-only read (audit MIGRATE-CREDS-FILE); delete after rotating.
+    fd = os.open(creds_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as fh:
+        fh.write(
+            f"{user.email} : {password}\n"
+            "(one-time password; rotate after first login, then DELETE this file)\n"
+        )
     print(f"[ok] operator created: {user.email} (id={user.id}); "
           f"credentials written to {creds_path}")
     return user

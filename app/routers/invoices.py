@@ -1,4 +1,5 @@
 import logging
+import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session, joinedload
@@ -86,9 +87,11 @@ def _save_invoice(
 
     upload_dir = "uploads/invoices"
     os.makedirs(upload_dir, exist_ok=True)
+    # uuid suffix: same-second concurrent uploads must not share a staging file
+    # (audit UPLOAD-COLLISION)
     file_path = os.path.join(
         upload_dir,
-        f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{_safe_filename(file.filename)}",
+        f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}_{_safe_filename(file.filename)}",
     )
     max_bytes = int(os.environ.get("MAX_FILE_SIZE_MB", "50")) * 1024 * 1024
     with open(file_path, "wb") as f:
