@@ -1,17 +1,22 @@
 """fastapi-users wiring: User schemas, UserManager, JWT-cookie auth backend.
 
-Mounted under /api/v1/auth (register / login / logout / forgot-password /
-reset-password). `/me` is served from app.routers-style dependency
-`current_active_user`, exported here for every tenant router.
+Mounted under /api/v1/auth. Login/register/forgot-password/reset-password are
+thin wrappers we own, decorated with slowapi limits directly (the old
+_apply_limit monkeypatch on third-party route objects is gone). Stock auth
+router serves logout only. `/me` is served via the `current_active_user`
+dependency exported here for every tenant router.
 
-Rate limits (slowapi): register 5/h/IP, login 10/h/IP, forgot-password 3/h/IP
-(plan revision #5 — forgot-password otherwise doubles as an SMTP bombing vector).
+Sessions are versioned JWTs (cookie ffaaauth): claims carry tv=token_version;
+any password/email change bumps the column and every outstanding cookie dies
+on next request (401).
 """
 import os
 from datetime import datetime
 
-from fastapi import Depends, HTTPException, Request
-from fastapi_users import FastAPIUsers, BaseUserManager, IntegerIDMixin
+import jwt as pyjwt  # PyJWTError sentinel only; token codecs come from fastapi_users.jwt
+from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
+from fastapi.security import OAuth2PasswordRequestForm
+from fastapi_users import FastAPIUsers, BaseUserManager, IntegerIDMixin, exceptions as fu_exc
 from fastapi_users import schemas as fu_schemas
 from fastapi_users.exceptions import InvalidPasswordException, UserAlreadyExists
 from fastapi_users.authentication import (
@@ -20,6 +25,8 @@ from fastapi_users.authentication import (
     JWTStrategy,
 )
 from fastapi_users.db import BaseUserDatabase
+from fastapi_users.jwt import decode_jwt, generate_jwt
+from fastapi_users.router.common import ErrorCode, ErrorModel
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy import func
@@ -114,6 +121,51 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
     reset_password_token_secret = RESET_TOKEN_SECRET
     verification_token_secret = VERIFICATION_TOKEN_SECRET
 
+    async def forgot_password(self, user: User, request: Request | None = None) -> None:
+        """Stock flow with one addition: the reset JWT embeds tv=token_version,
+        so a link minted before any later rotation is refused even though its
+        signature and password fingerprint still verify. fastapi-users v15
+        inlines token creation here, so this public method IS the seam."""
+        if not user.is_active:
+            raise fu_exc.UserInactive()
+        token_data = {
+            "sub": str(user.id),
+            "password_fgpt": self.password_helper.hash(user.hashed_password),
+            "aud": self.reset_password_token_audience,
+            "tv": int(user.token_version or 0),
+        }
+        token = generate_jwt(
+            token_data,
+            self.reset_password_token_secret,
+            self.reset_password_token_lifetime_seconds,
+        )
+        await self.on_after_forgot_password(user, token, request)
+
+    async def reset_password(
+        self, token: str, password: str, request: Request | None = None
+    ) -> User:
+        # Pre-check the tv claim, then hand off to the untouched stock logic.
+        try:
+            data = decode_jwt(
+                token,
+                self.reset_password_token_secret,
+                [self.reset_password_token_audience],
+            )
+            user = await self.get(self.parse_id(data["sub"]))
+        except (
+            pyjwt.PyJWTError,
+            KeyError,
+            fu_exc.UserNotExists,
+            fu_exc.InvalidID,
+        ):
+            raise fu_exc.InvalidResetPasswordToken()
+        if int(data.get("tv", 0)) != int(user.token_version or 0):
+            raise fu_exc.InvalidResetPasswordToken()
+        return await super().reset_password(token, password, request)
+
+    async def on_after_reset_password(self, user: User, request: Request | None = None) -> None:
+        # Rotation bumps the version → every session cookie dies (design D1).
+        await self.user_db.update(user, {"token_version": int(user.token_version or 0) + 1})
 
 async def get_user_manager(user_db=Depends(get_user_db)):
     yield UserManager(user_db)
@@ -146,8 +198,46 @@ cookie_transport = CookieTransport(
 )
 
 
-def get_jwt_strategy() -> JWTStrategy:
-    return JWTStrategy(secret=FFAA_SECRET, lifetime_seconds=3600)
+class VersionedJWTStrategy(JWTStrategy):
+    """Session JWTs embed tv=users.token_version (design D1).
+
+    read_token returns None on version mismatch → the authenticator answers
+    401. A missing claim means a pre-W1 token; grace: treated as version 0
+    (decided — no fleet-wide logout).
+    """
+
+    async def write_token(self, user: User) -> str:
+        data = {
+            "sub": str(user.id),
+            "aud": self.token_audience,
+            "tv": int(getattr(user, "token_version", 0) or 0),
+        }
+        return generate_jwt(
+            data, self.encode_key, self.lifetime_seconds, algorithm=self.algorithm
+        )
+
+    async def read_token(
+        self, token: str | None, user_manager: BaseUserManager[User, int]
+    ) -> User | None:
+        user = await super().read_token(token, user_manager)
+        if user is None:
+            return None
+        try:
+            payload = decode_jwt(
+                token,
+                self.decode_key,
+                self.token_audience,
+                algorithms=[self.algorithm],
+            )
+        except pyjwt.PyJWTError:
+            return None
+        if int(payload.get("tv", 0)) != int(getattr(user, "token_version", 0) or 0):
+            return None  # cookie predates a rotation → revoked everywhere
+        return user
+
+
+def get_jwt_strategy() -> VersionedJWTStrategy:
+    return VersionedJWTStrategy(secret=FFAA_SECRET, lifetime_seconds=3600)
 
 
 auth_backend = AuthenticationBackend(
@@ -162,21 +252,160 @@ current_active_user = fastapi_users.current_user(active=True)
 
 # --- Routers + abuse limits ------------------------------------------------------
 
-register_router = fastapi_users.get_register_router(UserRead, UserCreate)
-reset_router = fastapi_users.get_reset_password_router()
+# Public auth surface: thin wrappers WE own, so slowapi decorators bind
+# natively (design D5). The _apply_limit monkeypatch on third-party route
+# objects is deleted. Stock auth router below serves logout only — its login
+# route is dropped at mount prep because our wrapper replaces it.
+public_auth_router = APIRouter()
 auth_router = fastapi_users.get_auth_router(auth_backend)
+auth_router.routes = [
+    r for r in auth_router.routes if getattr(r, "path", None) != "/login"
+]
 
 
-def _apply_limit(router, path: str, limit: str) -> None:
-    """slowapi decorators need an endpoint carrying a `Request` param — all
-    fastapi-users routes have one, so re-wrap after router construction."""
-    for route in router.routes:
-        if getattr(route, "path", None) == path:
-            wrapped = limiter.limit(limit)(route.endpoint)
-            # Patch both: newer FastAPI rebuilds serving dependants from
-            # route.endpoint, older ones call route.dependant.call directly.
-            route.endpoint = wrapped
-            route.dependant.call = wrapped
+@public_auth_router.post(
+    "/login",
+    name="auth:jwt.login",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        status.HTTP_400_BAD_REQUEST: {"model": ErrorModel},
+    },
+)
+@limiter.limit("10/hour")
+async def login(
+    request: Request,
+    credentials: OAuth2PasswordRequestForm = Depends(),
+    user_manager: UserManager = Depends(get_user_manager),
+    strategy=Depends(auth_backend.get_strategy),
+):
+    """Form-encoded OAuth2 shape (contract pin). Sets the ffaaauth cookie."""
+    user = await user_manager.authenticate(credentials)
+    if user is None or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=ErrorCode.LOGIN_BAD_CREDENTIALS,
+        )
+    # backend.login returns the Response with the cookie already set.
+    return await auth_backend.login(strategy, user)
+
+@public_auth_router.post(
+    "/register",
+    name="register:register",
+    response_model=UserRead,
+    status_code=status.HTTP_201_CREATED,
+    responses={status.HTTP_400_BAD_REQUEST: {"model": ErrorModel}},
+)
+@limiter.limit("5/hour")
+async def register(
+    request: Request,
+    user_create: UserCreate,
+    user_manager: UserManager = Depends(get_user_manager),
+):
+    try:
+        created_user = await user_manager.create(user_create, safe=True, request=request)
+    except UserAlreadyExists:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=ErrorCode.REGISTER_USER_ALREADY_EXISTS,
+        )
+    except InvalidPasswordException as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"code": ErrorCode.REGISTER_INVALID_PASSWORD, "reason": e.reason},
+        )
+    return UserRead.model_validate(created_user)
+
+
+@public_auth_router.post(
+    "/forgot-password",
+    name="reset:forgot_password",
+    status_code=status.HTTP_202_ACCEPTED,
+)
+@limiter.limit("3/hour")
+async def forgot_password(
+    request: Request,
+    email: EmailStr = Body(..., embed=True),
+    user_manager: UserManager = Depends(get_user_manager),
+):
+    """Always 202 — never reveals whether the address exists (no enumeration)."""
+    try:
+        user = await user_manager.get_by_email(email)
+    except fu_exc.UserNotExists:
+        return None
+    try:
+        await user_manager.forgot_password(user, request)
+    except fu_exc.UserInactive:
+        pass
+    return None
+
+
+RESET_PASSWORD_RESPONSES = {
+    status.HTTP_400_BAD_REQUEST: {
+        "model": ErrorModel,
+        "content": {
+            "application/json": {
+                "examples": {
+                    ErrorCode.RESET_PASSWORD_BAD_TOKEN: {
+                        "value": {"detail": ErrorCode.RESET_PASSWORD_BAD_TOKEN}
+                    },
+                    ErrorCode.RESET_PASSWORD_INVALID_PASSWORD: {
+                        "value": {
+                            "detail": {
+                                "code": ErrorCode.RESET_PASSWORD_INVALID_PASSWORD,
+                                "reason": "Password should be at least 3 characters",
+                            }
+                        },
+                    },
+                }
+            }
+        },
+    },
+}
+
+@public_auth_router.post(
+    "/reset-password",
+    name="reset:reset_password",
+    responses=RESET_PASSWORD_RESPONSES,
+)
+@limiter.limit("10/hour")
+async def reset_password(
+    request: Request,
+    token: str = Body(...),
+    password: str = Body(...),
+    user_manager: UserManager = Depends(get_user_manager),
+):
+    """Consumes a tv-stamped reset token; success bumps token_version."""
+    try:
+        await user_manager.reset_password(token, password, request)
+    except (
+        fu_exc.InvalidResetPasswordToken,
+        fu_exc.UserNotExists,
+        fu_exc.UserInactive,
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=ErrorCode.RESET_PASSWORD_BAD_TOKEN,
+        )
+    except fu_exc.InvalidPasswordException as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": ErrorCode.RESET_PASSWORD_INVALID_PASSWORD,
+                "reason": e.reason,
+            },
+        )
+
+
+def _user_limit_key(request: Request) -> str:
+    """Account changes are keyed on the authenticated user, not IP (a shared
+    NAT office must not lock everyone out of their own account settings)."""
+    return f"user:{getattr(request.state, 'user_key', '')}"
+
+
+async def current_user_keyed(request: Request, user: User = Depends(current_active_user)) -> User:
+    # Resolved before the limiter decorator runs → request.state carries the key.
+    request.state.user_key = str(user.id)
+    return user
 
 
 class AccountUpdate(BaseModel):
@@ -186,19 +415,19 @@ class AccountUpdate(BaseModel):
 
 
 @auth_router.patch("/account", response_model=UserRead)
+@limiter.limit("10/hour", key_func=_user_limit_key)
 async def update_account(
     request: Request,
     payload: AccountUpdate,
-    user: User = Depends(current_active_user),
+    user: User = Depends(current_user_keyed),
     user_manager: UserManager = Depends(get_user_manager),
 ):
     """Authenticated account self-service (PATCH /api/v1/auth/account).
 
     Email and password changes both require current_password — an
     account-takeover guard, since a hijacked session alone must not be able
-    to lock the owner out. JWT strategy note: existing tokens stay valid
-    until expiry after a password change; revocation would need a server-side
-    session store.
+    to lock the owner out. Either change bumps token_version: every session
+    cookie (all devices) is revoked and the FE must re-login.
     """
     if not payload.email and not payload.new_password:
         raise HTTPException(status_code=400, detail="Nothing to update")
@@ -226,10 +455,9 @@ async def update_account(
         raise HTTPException(status_code=400, detail=f"Invalid password: {e.reason}")
     except UserAlreadyExists:
         raise HTTPException(status_code=400, detail="Email already registered")
+
+    if updates:  # password or email actually changed → kill every session JWT
+        await user_manager.user_db.update(
+            user, {"token_version": int(user.token_version or 0) + 1}
+        )
     return user
-
-
-_apply_limit(register_router, "/register", "5/hour")
-_apply_limit(auth_router, "/login", "10/hour")
-_apply_limit(reset_router, "/forgot-password", "3/hour")
-_apply_limit(auth_router, "/account", "10/hour")

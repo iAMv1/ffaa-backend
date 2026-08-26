@@ -36,12 +36,19 @@ API docs: http://localhost:8000/docs
 logout / forgot-password / reset-password) with JWT-in-httpOnly-cookie
 (`ffaaauth`, `samesite=lax`; no token storage in JS). Every tenant endpoint
 requires a logged-in user and is scoped to that user's data (`Client.owner_id`;
-404 — not 403 — on other tenants' resources). Rate limits via slowapi:
-register 5/h/IP, login 10/h/IP, forgot-password 3/h/IP.
+404 — not 403 — on other tenants' resources). Sessions are revocable: each JWT
+embeds `tv=users.token_version`, and any password rotate / password reset /
+email change bumps the column, so every outstanding cookie (all devices) gets
+401 on its next use. Rate limits via slowapi decorators on wrapper routes we
+own (no monkeypatching of fastapi-users internals): register 5/h/IP,
+login 10/h/IP, forgot-password 3/h/IP, reset-password 10/h/IP,
+PATCH /auth/account 10/h per user.
 
 Set `FFAA_SECRET` in production (JWT/reset-token signing); `FFAA_COOKIE_SECURE=true`
 behind https. The operator account comes from `scripts/migrate_multi_tenant.py`
-(email from `FFAA_OPERATOR_EMAIL`, one-time password in `data/operator_credentials.txt`).
+(email from `FFAA_OPERATOR_EMAIL`); the one-time random password is printed to
+stdout once at creation and never written to disk — rotate it via
+PATCH /api/v1/auth/account after first login.
 
 The localhost posture is retained for dev: CORS pinned to the vite dev origins,
 compose ports bound to `127.0.0.1`. Do not expose FFAA beyond localhost without

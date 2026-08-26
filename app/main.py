@@ -4,16 +4,27 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from sqlalchemy import text
+from sqlalchemy.exc import OperationalError
 
 from .database import Base, engine
 from .billing import seed_plans
-from .users import auth_router, register_router, reset_router, limiter, current_active_user, UserRead
+from .users import public_auth_router, auth_router, limiter, current_active_user, UserRead
 from .routers import invoices, clients, bank, tally, duplicates, reminders, billing as billing_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    # W1 (M1): create_all won't ALTER an existing users table — add the
+    # revocation column idempotently; duplicate-column means it's already there.
+    try:
+        with engine.begin() as conn:
+            conn.execute(text(
+                "ALTER TABLE users ADD COLUMN token_version INTEGER NOT NULL DEFAULT 0"
+            ))
+    except OperationalError:
+        pass
     seed_plans()  # idempotent free/pro catalog (P4)
     yield
 
@@ -33,10 +44,10 @@ app.add_middleware(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# Auth: register/login/logout/forgot/reset under /api/v1/auth (plan: P1).
+# Auth under /api/v1/auth: our rate-limited wrappers (register/login/
+# forgot/reset) + the stock router for logout only.
+app.include_router(public_auth_router, prefix="/api/v1/auth")
 app.include_router(auth_router, prefix="/api/v1/auth")
-app.include_router(register_router, prefix="/api/v1/auth")
-app.include_router(reset_router, prefix="/api/v1/auth")
 
 # /me surface for the FE AuthProvider (plan: fetch /api/v1/me on boot).
 # NOTE: fastapi-users' stock get_users_router() is NOT used — its GET /{id}

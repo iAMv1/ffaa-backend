@@ -1,10 +1,9 @@
 """P1 multi-tenant migration. IDEMPOTENT — safe to run repeatedly.
-
 Steps (each individually skipped when already applied):
   1. users table via metadata create_all (creates only missing tables)
   2. operator account (email from FFAA_OPERATOR_EMAIL, default operator@ffaa.local);
-     one-time random 16-char password written to data/operator_credentials.txt
-     ONLY on first creation
+     one-time random 16-char password PRINTED TO STDOUT once, on first creation
+     only (M8: no plaintext file on disk — rotate after first login)
   3. clients table rebuild (SQLite has no ALTER CONSTRAINT): drop global
      UNIQUE(name), add owner_id column + composite UNIQUE(owner_id, name)
   4. backfill clients.owner_id -> operator id where NULL
@@ -75,16 +74,11 @@ def ensure_operator(engine, db) -> "models.User":
     db.commit()
     db.refresh(user)
 
-    creds_path = REPO_ROOT / "data" / "operator_credentials.txt"
-    # 0o600 — owner-only read (audit MIGRATE-CREDS-FILE); delete after rotating.
-    fd = os.open(creds_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
-    with os.fdopen(fd, "w", encoding="utf-8") as fh:
-        fh.write(
-            f"{user.email} : {password}\n"
-            "(one-time password; rotate after first login, then DELETE this file)\n"
-        )
-    print(f"[ok] operator created: {user.email} (id={user.id}); "
-          f"credentials written to {creds_path}")
+    # M8: the password is shown once on stdout and never written to disk.
+    # Rotate it via POST /api/v1/auth/account after first login (that bump
+    # also revokes every outstanding session/reset token).
+    print(f"[ok] operator created: {user.email} (id={user.id})")
+    print(f"[ok] ONE-TIME password (rotate immediately, not shown again): {password}")
     return user
 
 

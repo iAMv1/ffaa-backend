@@ -55,8 +55,9 @@ def test_change_password(client):
         json={"new_password": new_pw, "current_password": TEST_PASSWORD},
     )
     assert r.status_code == 200, r.text
-    # JWT strategy: the existing cookie/token stays valid until expiry.
-    assert client.get("/api/v1/me").status_code == 200
+    # W1 token_version: the change bumps the version → this session cookie
+    # is revoked immediately; the FE must re-login.
+    assert client.get("/api/v1/me").status_code == 401
     # old password no longer logs in; new one does (fresh clients to dodge cookies)
     fresh = TestClient(app)
     r = fresh.post("/api/v1/auth/login", data={"username": email, "password": TEST_PASSWORD})
@@ -95,8 +96,8 @@ def test_email_change(client):
         json={"email": new, "current_password": TEST_PASSWORD},
     )
     assert r.status_code == 200, r.text
-    assert r.json()["email"] == new
-    assert client.get("/api/v1/me").json()["email"] == new
+    # W1 token_version: the email change revoked this session cookie.
+    assert client.get("/api/v1/me").status_code == 401
     # login under the NEW email works
     fresh = TestClient(app)
     r = fresh.post("/api/v1/auth/login", data={"username": new, "password": TEST_PASSWORD})

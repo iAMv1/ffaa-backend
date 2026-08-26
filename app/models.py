@@ -136,6 +136,9 @@ class User(SQLAlchemyBaseUserTable[int], Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True)
     created_at = Column(DateTime, default=datetime.now)
+    # W1 revocation counter: JWTs embed it as the `tv` claim; any password or
+    # email change bumps it and every outstanding cookie dies on next use.
+    token_version = Column(Integer, nullable=False, default=0)
 
 
 # --- Billing (P4 Razorpay) -----------------------------------------------------
