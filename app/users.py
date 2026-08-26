@@ -514,13 +514,12 @@ def build_oauth_routers() -> list[tuple[APIRouter, str]]:
             continue
         client = client_cls(client_id, client_secret)
         router = fastapi_users.get_oauth_router(
+            client,
             auth_backend,
-            FFAA_SECRET,
+            FFAA_SECRET,  # state_secret — CSRF JWT for the oauth round-trip
+            redirect_url=f"{FFAA_PUBLIC_URL}/api/v1/auth/{name}/callback",
             associate_by_email=True,  # link to existing account with same email
             is_verified_by_default=True,  # Google/GitHub verify emails upstream
-            # The PROVIDER sends the code here (proxied same-origin → API);
-            # after the cookie is set, on_after_login bounces to FE /app.
-            redirect_url=f"{FFAA_PUBLIC_URL}/api/v1/auth/{name}/callback",
         )
         pairs.append((router, name))
     return pairs
