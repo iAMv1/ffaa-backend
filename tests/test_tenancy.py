@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # same isolated test DB as test_smoke.py — set before app imports
 TEST_DB_PATH = (Path(__file__).parent / "test_ffaa.db").as_posix()
-os.environ.setdefault("FFAA_SECRET", "test-secret-do-not-use")
+os.environ.setdefault("FFAA_SECRET", "test-secret-do-not-use-0123456789abcdef0123456789abcdef")
 os.environ.setdefault("FFAA_DEV", "1")
 os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB_PATH}"
 
@@ -39,6 +39,10 @@ def pytest_sessionfinish(session, exitstatus):
 @pytest.fixture(autouse=True)
 def clean_db():
     models.Base.metadata.create_all(bind=engine)
+    # Fail-closed billing gate (design §4): gated routes need a seeded catalog.
+    from app.billing import seed_plans
+
+    seed_plans()
     yield
     models.Base.metadata.drop_all(bind=engine)
 

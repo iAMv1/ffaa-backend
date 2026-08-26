@@ -8,7 +8,7 @@ monkeypatch on fastapi-users route objects is gone.
 import os
 
 os.environ.setdefault("DATABASE_URL", "sqlite:///./test_ratelimit.db")
-os.environ.setdefault("FFAA_SECRET", "test-secret-do-not-use")
+os.environ.setdefault("FFAA_SECRET", "test-secret-do-not-use-0123456789abcdef0123456789abcdef")
 # NOTE: deliberately NOT disabling the limiter here.
 
 import pytest

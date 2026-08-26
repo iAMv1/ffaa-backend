@@ -49,15 +49,13 @@ def require_entitlement(db: Session, user: "models.User", action: str) -> None:
     code = billing.effective_plan_code(db, user.id)
     plan = billing.get_plan(db, code)
     if plan is None:
-        # unseeded catalog — fail open rather than lock the app, but LOUDLY
-        # (audit TENANCY-FAIL-OPEN): an empty billing_plans table silently
-        # disables all caps, so make it visible in logs.
-        import logging
-
-        logging.getLogger("ffaa.tenancy").warning(
-            "billing_plans empty — entitlement caps UNENFORCED; run seed_plans()"
+        # Boot-invariant backstop (audit TENANCY-FAIL-OPEN): the catalog is
+        # seeded AND checked at startup; an empty table here means seeding
+        # failed → fail CLOSED with 503 instead of silently disabling all
+        # caps. The old loud-log-fail-open path is deleted (design §4).
+        raise HTTPException(
+            status_code=503, detail={"detail": "billing_unconfigured"}
         )
-        return
 
     cap_field = {
         "invoice_upload": "invoice_cap",

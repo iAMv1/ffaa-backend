@@ -6,7 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 import os
-os.environ.setdefault("FFAA_SECRET", "test-secret-do-not-use")
+os.environ.setdefault("FFAA_SECRET", "test-secret-do-not-use-0123456789abcdef0123456789abcdef")
 os.environ.setdefault("FFAA_DEV", "1")
 from app.database import engine
 from app.main import app

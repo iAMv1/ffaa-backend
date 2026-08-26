@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # same isolated test DB as test_smoke.py — set before app imports
 TEST_DB_PATH = (Path(__file__).parent / "test_ffaa.db").as_posix()
-os.environ.setdefault("FFAA_SECRET", "test-secret-do-not-use")
+os.environ.setdefault("FFAA_SECRET", "test-secret-do-not-use-0123456789abcdef0123456789abcdef")
 os.environ.setdefault("FFAA_DEV", "1")
 os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB_PATH}"
 
@@ -40,6 +40,9 @@ def pytest_sessionfinish(session, exitstatus):
 def clean_db():
     # ponytail: recreate sqlite for each test
     models.Base.metadata.create_all(bind=engine)
+    from app.billing import seed_plans
+
+    seed_plans()  # fail-closed billing gate needs the catalog (design §4)
     yield
     models.Base.metadata.drop_all(bind=engine)
 

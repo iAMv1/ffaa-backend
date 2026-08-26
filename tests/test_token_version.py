@@ -15,7 +15,7 @@ import asyncio
 import os
 import uuid
 
-os.environ.setdefault("FFAA_SECRET", "test-secret-do-not-use")
+os.environ.setdefault("FFAA_SECRET", "test-secret-do-not-use-0123456789abcdef0123456789abcdef")
 os.environ.setdefault("FFAA_DEV", "1")
 
 import pytest

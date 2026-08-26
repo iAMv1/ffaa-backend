@@ -5,7 +5,7 @@ from decimal import Decimal
 from fastapi_users.db import SQLAlchemyBaseUserTable
 from sqlalchemy import (
     Column, Integer, String, Float, Numeric, Date, DateTime, ForeignKey, Boolean,
-    Text, UniqueConstraint,
+    Text, UniqueConstraint, Index,
 )
 from sqlalchemy.orm import relationship
 from .database import Base
@@ -29,7 +29,11 @@ class Client(Base):
     address = Column(Text, nullable=True)
     auto_created = Column(Boolean, default=False)  # minted from OCR company name (ticket 03)
     created_at = Column(DateTime)
-    __table_args__ = (UniqueConstraint("owner_id", "name", name="uq_clients_owner_name"),)
+    __table_args__ = (
+        UniqueConstraint("owner_id", "name", name="uq_clients_owner_name"),
+        # covering index for the client_cap COUNT (design §4)
+        Index("ix_clients_owner", "owner_id"),
+    )
 
 class Invoice(Base):
     __tablename__ = "invoices"
@@ -56,6 +60,8 @@ class Invoice(Base):
     created_at = Column(DateTime)
     reviewed_at = Column(DateTime, nullable=True)
     approved = Column(Boolean, default=False)
+    # covering index for the calendar-month invoice_cap COUNT (design §4)
+    __table_args__ = (Index("ix_invoices_client_created", "client_id", "created_at"),)
 
     client = relationship("Client")
     items = relationship("InvoiceItem", back_populates="invoice")
@@ -143,6 +149,7 @@ class User(SQLAlchemyBaseUserTable[int], Base):
 
 # --- Billing (P4 Razorpay) -----------------------------------------------------
 
+
 class BillingPlan(Base):
     __tablename__ = "billing_plans"
     code = Column(String(50), primary_key=True)  # 'free' / 'pro'
@@ -152,6 +159,8 @@ class BillingPlan(Base):
     invoice_cap = Column(Integer, nullable=True)
     client_cap = Column(Integer, nullable=True)
     features_json = Column(Text, default="[]")
+    # Razorpay Plan id, cached by ensure_pro_plan() create-if-missing.
+    rzp_plan_id = Column(String(100), nullable=True, unique=True)
 
 
 class BillingSubscription(Base):
@@ -159,9 +168,28 @@ class BillingSubscription(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), unique=True)
     plan_code = Column(String(50), default="free")
-    status = Column(String(20), default="active")  # active / expired
+    rzp_subscription_id = Column(String(100), unique=True, nullable=True)  # sub_xxx
+    # Mirrors the RZP subscription state (created/authenticated/active/pending/
+    # halted/paused/completed/cancelled/expired) plus LOCAL_STATUS_EXTENSIONS
+    # {lapsed, disputed} — single source of truth; `status` column was dropped.
+    rzp_status = Column(String(20))
+    grace_ends_at = Column(DateTime, nullable=True)  # set on past_due entry (now+7d)
     current_period_end = Column(DateTime)
+    rzp_short_url = Column(String(500), nullable=True)  # fallback checkout link
+    rzp_customer_id = Column(String(100), nullable=True)  # cached RZP customer
     updated_at = Column(DateTime)
+
+
+# Idempotency anchor for ALL webhook events (not just payments): handler
+# inserts event_id first; UNIQUE violation → duplicate delivery → 200 no-op.
+class BillingWebhookEvent(Base):
+    __tablename__ = "billing_webhook_events"
+    id = Column(Integer, primary_key=True, index=True)
+    event_id = Column(String(100), unique=True)
+    event_type = Column(String(50))
+    payload_json = Column(Text)
+    received_at = Column(DateTime)
+    processed_at = Column(DateTime, nullable=True)
 
 
 class BillingPayment(Base):
@@ -169,8 +197,9 @@ class BillingPayment(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     razorpay_order_id = Column(String(100), index=True)
-    # UNIQUE: the idempotency anchor — verify + webhook may race/replay (rev #6).
+    # UNIQUE: the idempotency anchor — replayed/racing deliveries credit once.
     razorpay_payment_id = Column(String(100), unique=True)
     amount_rupees = Column(Integer, default=0)
-    status = Column(String(20), default="created")  # created / paid / failed
+    # created / seen / paid / underpaid / refunded / failed / abandoned
+    status = Column(String(20), default="created")
     created_at = Column(DateTime)

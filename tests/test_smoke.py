@@ -8,7 +8,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # ponytail: isolate tests from prod DB (was: drop_all on real ffaa.db)
 TEST_DB_PATH = (Path(__file__).parent / "test_ffaa.db").as_posix()
-os.environ.setdefault("FFAA_SECRET", "test-secret-do-not-use")
+os.environ.setdefault("FFAA_SECRET", "test-secret-do-not-use-0123456789abcdef0123456789abcdef")
 os.environ.setdefault("FFAA_DEV", "1")
 os.environ["DATABASE_URL"] = f"sqlite:///{TEST_DB_PATH}"
 
@@ -38,6 +38,9 @@ def pytest_sessionfinish(session, exitstatus):
 def clean_db():
     # ponytail: recreate sqlite for each test
     models.Base.metadata.create_all(bind=engine)
+    from app.billing import seed_plans
+
+    seed_plans()  # fail-closed billing gate needs the catalog (design §4)
     yield
     models.Base.metadata.drop_all(bind=engine)
 
@@ -231,14 +234,28 @@ def test_tally_xml_has_voucher():
 
 
 def test_invoices_list_filter(client):
-    # two clients
-    r1 = client.post("/api/v1/clients", json={"name": "Client A"})
-    r2 = client.post("/api/v1/clients", json={"name": "Client B"})
-    c1, c2 = r1.json()["id"], r2.json()["id"]
-    # create invoice for client A (direct DB insert)
+    # free cap is 1 client — grant pro before second client so filter test can run
     from app.database import SessionLocal
     from app import models
-    from datetime import datetime
+    from datetime import datetime, timedelta
+    r1 = client.post("/api/v1/clients", json={"name": "Client A"})
+    assert r1.status_code in (200, 201), r1.text
+    # pro gate: insert active subscription for this tenant
+    db = SessionLocal()
+    try:
+        user = db.query(models.User).first()
+        # the authed tenant from fixture — elevate to pro
+        db.add(models.BillingSubscription(
+            user_id=user.id, plan_code="pro", rzp_status="active",
+            rzp_subscription_id=f"sub_smoke_{user.id}", current_period_end=datetime.now() + timedelta(days=30),
+            updated_at=datetime.now()))
+        db.commit()
+    finally:
+        db.close()
+    r2 = client.post("/api/v1/clients", json={"name": "Client B"})
+    assert r2.status_code in (200, 201), r2.text
+    c1, c2 = r1.json()["id"], r2.json()["id"]
+    # create invoice for client A (direct DB insert)
     db = SessionLocal()
     try:
         inv_a = models.Invoice(
