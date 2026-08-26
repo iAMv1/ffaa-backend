@@ -34,7 +34,7 @@ from sqlalchemy.orm import Session
 
 from .database import SessionLocal
 from pydantic import BaseModel, EmailStr
-from .models import User
+from .models import OAuthAccount, User
 
 # FFAA_SECRET is REQUIRED outside explicit dev mode (FFAA_DEV=1): a known
 # fallback key would let anyone forge auth cookies (audit finding AUTH-SECRET-FALLBACK).
@@ -98,16 +98,32 @@ class SyncUserDatabase(BaseUserDatabase[User, int]):
         self.session.delete(user)
         self.session.commit()
 
-    # OAuth accounts are out of scope (plan: no social login).
+    # --- OAuth (Google/GitHub social login) ---
+
     async def get_by_oauth_account(self, oauth_account_name: str, account_id: str):
-        raise NotImplementedError("OAuth not supported")
+        return (
+            self.session.query(self.user_table)
+            .join(models.OAuthAccount)
+            .filter(
+                models.OAuthAccount.oauth_name == oauth_account_name,
+                models.OAuthAccount.account_id == account_id,
+            )
+            .first()
+        )
 
     async def add_oauth_account(self, user: User, create_dict: dict):
-        raise NotImplementedError("OAuth not supported")
+        account = models.OAuthAccount(**create_dict)
+        user.oauth_accounts.append(account)
+        self.session.add(user)
+        self.session.commit()
+        return user
 
     async def update_oauth_account(self, user: User, oauth_account, update_dict: dict):
-        raise NotImplementedError("OAuth not supported")
-
+        for field, value in update_dict.items():
+            setattr(oauth_account, field, value)
+        self.session.add(user)
+        self.session.commit()
+        return user
 
 def get_user_db():
     db = SessionLocal()
@@ -166,6 +182,15 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
     async def on_after_reset_password(self, user: User, request: Request | None = None) -> None:
         # Rotation bumps the version → every session cookie dies (design D1).
         await self.user_db.update(user, {"token_version": int(user.token_version or 0) + 1})
+
+    async def on_after_login(self, user: User, request: Request, response) -> None:
+        # Social-login callbacks land on an API route with a blank body; the
+        # ffaaauth cookie is already on this response — send the browser home.
+        if "/callback" in request.url.path:
+            response.status_code = 302
+            public = os.environ.get("FFAA_PUBLIC_URL", "http://localhost:5173")
+            response.headers["Location"] = f"{public}/app"
+
 
 async def get_user_manager(user_db=Depends(get_user_db)):
     yield UserManager(user_db)
@@ -461,3 +486,52 @@ async def update_account(
             user, {"token_version": int(user.token_version or 0) + 1}
         )
     return user
+
+
+# --- Social login (Google / GitHub) ------------------------------------------
+#
+# Sanctioned fastapi-users extension: get_oauth_router() handles the
+# authorize→callback→account-link flow; we only supply clients + env config.
+# Providers are opt-in via env keys — unconfigured ones are simply not routed
+# and not advertised (GET /api/v1/auth/providers).
+
+FFAA_PUBLIC_URL = os.environ.get("FFAA_PUBLIC_URL", "http://localhost:5173")
+
+def build_oauth_routers() -> list[tuple[APIRouter, str]]:
+    """One (router, provider-name) pair per provider with env keys set."""
+    from httpx_oauth.clients.github import GitHubOAuth2
+    from httpx_oauth.clients.google import GoogleOAuth2
+
+    pairs: list[tuple[APIRouter, str]] = []
+    providers = [
+        ("google", GoogleOAuth2, "GOOGLE_OAUTH_CLIENT_ID", "GOOGLE_OAUTH_CLIENT_SECRET"),
+        ("github", GitHubOAuth2, "GITHUB_OAUTH_CLIENT_ID", "GITHUB_OAUTH_CLIENT_SECRET"),
+    ]
+    for name, client_cls, env_id, env_secret in providers:
+        client_id = os.environ.get(env_id, "")
+        client_secret = os.environ.get(env_secret, "")
+        if not (client_id and client_secret):
+            continue
+        client = client_cls(client_id, client_secret)
+        router = fastapi_users.get_oauth_router(
+            auth_backend,
+            FFAA_SECRET,
+            associate_by_email=True,  # link to existing account with same email
+            is_verified_by_default=True,  # Google/GitHub verify emails upstream
+            # The PROVIDER sends the code here (proxied same-origin → API);
+            # after the cookie is set, on_after_login bounces to FE /app.
+            redirect_url=f"{FFAA_PUBLIC_URL}/api/v1/auth/{name}/callback",
+        )
+        pairs.append((router, name))
+    return pairs
+
+
+def configured_oauth_providers() -> list[str]:
+    return [
+        name
+        for name, _cls, env_id, env_secret in [
+            ("google", None, "GOOGLE_OAUTH_CLIENT_ID", "GOOGLE_OAUTH_CLIENT_SECRET"),
+            ("github", None, "GITHUB_OAUTH_CLIENT_ID", "GITHUB_OAUTH_CLIENT_SECRET"),
+        ]
+        if os.environ.get(env_id) and os.environ.get(env_secret)
+    ]

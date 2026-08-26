@@ -11,7 +11,15 @@ from sqlalchemy.exc import OperationalError
 
 from .database import Base, engine
 from .billing import seed_plans, catalog_ready
-from .users import public_auth_router, auth_router, limiter, current_active_user, UserRead
+from .users import (
+    configured_oauth_providers,
+    public_auth_router,
+    auth_router,
+    limiter,
+    current_active_user,
+    build_oauth_routers,
+    UserRead,
+)
 from .routers import invoices, clients, bank, tally, duplicates, reminders, billing as billing_router
 
 logger = logging.getLogger("ffaa.billing")
@@ -105,9 +113,21 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.include_router(public_auth_router, prefix="/api/v1/auth")
 app.include_router(auth_router, prefix="/api/v1/auth")
 
+# Social login: one router per provider whose env keys are configured
+# (GOOGLE_OAUTH_CLIENT_ID/SECRET, GITHUB_OAUTH_CLIENT_ID/SECRET).
+for _oauth_router, _provider in build_oauth_routers():
+    app.include_router(_oauth_router, prefix=f"/api/v1/auth/{_provider}", tags=["auth"])
+
 # /me surface for the FE AuthProvider (plan: fetch /api/v1/me on boot).
 # NOTE: fastapi-users' stock get_users_router() is NOT used — its GET /{id}
 # route shadows every other single-segment path mounted under /api/v1.
+@app.get("/api/v1/auth/providers")
+def auth_providers():
+    """Advertises configured social-login providers so the FE renders only
+    buttons that can actually complete their flow."""
+    return {"providers": configured_oauth_providers()}
+
+
 @app.get("/api/v1/me", response_model=UserRead)
 def me(user=Depends(current_active_user)):
     return user

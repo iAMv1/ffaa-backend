@@ -1,8 +1,7 @@
 from datetime import datetime
-
 from decimal import Decimal
 
-from fastapi_users.db import SQLAlchemyBaseUserTable
+from fastapi_users.db import SQLAlchemyBaseOAuthAccountTable, SQLAlchemyBaseUserTable
 from sqlalchemy import (
     Column, Integer, String, Float, Numeric, Date, DateTime, ForeignKey, Boolean,
     Text, UniqueConstraint, Index,
@@ -145,6 +144,14 @@ class User(SQLAlchemyBaseUserTable[int], Base):
     # W1 revocation counter: JWTs embed it as the `tv` claim; any password or
     # email change bumps it and every outstanding cookie dies on next use.
     token_version = Column(Integer, nullable=False, default=0)
+    oauth_accounts = relationship("OAuthAccount", lazy="joined", cascade="all, delete-orphan")
+
+
+class OAuthAccount(SQLAlchemyBaseOAuthAccountTable[int], Base):
+    """Linked social-login identity (Google/GitHub). Integer PK per project style."""
+    __tablename__ = "oauth_accounts"
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="cascade"), nullable=False)
 
 
 # --- Billing (P4 Razorpay) -----------------------------------------------------
