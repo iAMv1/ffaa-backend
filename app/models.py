@@ -48,6 +48,10 @@ class Invoice(Base):
     sgst = Column(Money, default=_ZERO)
     igst = Column(Money, default=_ZERO)
     hsn_code = Column(String(50), nullable=True)
+    supplier_gstin = Column(String(15), nullable=True)
+    buyer_name = Column(String(255), nullable=True)
+    buyer_gstin = Column(String(15), nullable=True)
+    place_of_supply = Column(String(2), nullable=True)
     quantity = Column(Float, nullable=True)
     item_description = Column(Text, nullable=True)
     invoice_type = Column(String(20))  # sales or purchase

@@ -53,6 +53,10 @@ class InvoiceBase(BaseModel):
     sgst: float = 0.0
     igst: float = 0.0
     hsn_code: Optional[str] = None
+    supplier_gstin: Optional[str] = None
+    buyer_name: Optional[str] = None
+    buyer_gstin: Optional[str] = None
+    place_of_supply: Optional[str] = None
     quantity: Optional[float] = None
     item_description: Optional[str] = None
     invoice_type: str = "sales"

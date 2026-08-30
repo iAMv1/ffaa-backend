@@ -256,11 +256,13 @@ def _items_from_word_lines(lines) -> list[dict]:
             zones.append(("rate", w[1]))
         elif re.match(r"AMOUNT|TOTAL", up):
             zones.append(("amount", w[1]))
+        elif re.match(r"HSN|SAC", up):
+            zones.append(("hsn", w[1]))
         elif re.match(r"DESC|ITEM|PARTICULAR", up):
             zones.append(("desc", w[1]))
     zones.sort(key=lambda z: z[1])
     kinds = [z[0] for z in zones]
-    if "desc" not in kinds or not any(k in ("rate", "amount", "qty") for k in kinds):
+    if "desc" not in kinds or not any(k in ("rate", "amount", "qty", "hsn") for k in kinds):
         return items
 
     def zone_of(x0):
@@ -279,18 +281,32 @@ def _items_from_word_lines(lines) -> list[dict]:
                 return n
         return None
 
+    _HEADER_TOKENS = {
+        "SL", "NO", "NO.", "PARTICULARS", "PARTICULAR", "HSN", "SAC", "RATE",
+        "PER", "AMOUNT", "QTY", "QUANTITY", "DESCRIPTION", "ITEM", "DESC",
+        "UNIT", "PRICE", "SR", "SNO", "S.NO",
+    }
+
     for line in lines[header_idx + 1:]:
         joined = " ".join(w[0] for w in line).upper()
-        if re.search(r"SUBTOTAL|TOTAL|TAX|BALANCE|GRAND", joined):
+        # stop at tax / subtotal / grand-total summary rows — but NOT on the
+        # substring "TAX" inside a description like "Tax Preparation"
+        if re.search(r"\b(SUBTOTAL|GRAND\s*TOTAL|TOTAL\s*AMOUNT|TAXABLE|BALANCE|DUE)\b", joined):
+            break
+        if re.search(r"\b(CGST|SGST|IGST|CESS|UTGST)\b", joined) and re.search(r"%|\bPAYABLE\b", joined):
             break
         by_zone: dict[str, list] = {}
         for w in line:
             by_zone.setdefault(zone_of(w[1]), []).append(w)
         desc = " ".join(w[0] for w in by_zone.get("desc", []) if _num(w[0]) is None)
         desc = re.sub(r"^\d+\s+", "", desc).strip()
+        # skip column-header continuation rows (e.g. a stray "No." line)
+        if desc and desc.upper() in _HEADER_TOKENS and first_num(by_zone.get("amount", [])) is None:
+            continue
         qty = first_num(by_zone.get("qty", []))
         rate = first_num(by_zone.get("rate", []))
         amount = first_num(by_zone.get("amount", []))
+        hsn = first_num(by_zone.get("hsn", []))
         if amount is None:
             for w in reversed(line):
                 n = _num(w[0])
@@ -305,7 +321,7 @@ def _items_from_word_lines(lines) -> list[dict]:
                 and abs(rate * 1.0 - amount) / max(amount, 1) < 0.02:
             qty = None  # position number, not qty
         items.append({"desc": desc or "—", "qty": qty, "rate": rate,
-                      "taxable": amount, "hsn": None})
+                      "taxable": amount, "hsn": hsn})
     return items
 
 
@@ -428,6 +444,10 @@ def parse_invoice_fields(text: str) -> Dict[str, Any]:
         "invoice_number": None,
         "invoice_date": None,
         "company_name": None,
+        "supplier_gstin": None,
+        "buyer_name": None,
+        "buyer_gstin": None,
+        "place_of_supply": None,
         "gst_rate": None,
         "taxable_value": None,
         "total_amount": None,
@@ -436,6 +456,7 @@ def parse_invoice_fields(text: str) -> Dict[str, Any]:
         "igst": None,
         "hsn_code": None,
         "quantity": None,
+        "total_in_words": None,
         "field_completeness": 0.0,
     }
     lines = text.splitlines()
@@ -492,6 +513,60 @@ def parse_invoice_fields(text: str) -> Dict[str, Any]:
                 break
         if len(names) >= 2:
             fields["company_name"] = names[1]
+
+    # --- GST Tax-Invoice layout (Indian) -----------------------------
+    # Born-digital GST invoices expose a text layer; extract seller/buyer/
+    # GSTIN structurally instead of via fragile label-walks.
+    GSTIN_RE = re.compile(r"\b([0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][0-9A-Z]{3})\b")
+    _gstins = [(m.start(), m.group(1)) for m in GSTIN_RE.finditer(text)]
+    if _gstins:
+        fields["supplier_gstin"] = _gstins[0][1]
+        if len(_gstins) > 1:
+            fields["buyer_gstin"] = _gstins[1][1]
+        _pre = text[:_gstins[0][0]].splitlines()
+        _seller = None
+        for _j in range(len(_pre) - 1, -1, -1):
+            _s = _pre[_j].strip()
+            if not _s:
+                continue
+            if re.search(r"gstin|tax invoice|bill to|buyer|state name|e-?mail|invoice no|dated|place of supply", _s.lower()):
+                continue
+            if re.search(r"\bpan\b", _s.lower()):
+                continue
+            if re.search(r"&|ltd|limited|llp|pvt|private|co\.?$|proprietor|enterprises|corporation|inc\b|services|solutions|traders|associates|& sons|& co", _s.lower()):
+                _seller = _s
+                break
+        if _seller is None:
+            for _j in range(len(_pre) - 1, -1, -1):
+                _s = _pre[_j].strip()
+                if not _s or re.match(r"^[\d,.\- /]+$", _s):
+                    continue
+                if re.search(r"gstin|tax invoice|bill to|buyer|state name|e-?mail|invoice|dated|pan\b|road|street|nagar|colony|sector|floor|plot|near|behind|opp|delhi|mumbai|chennai|kolkata|bangalore|hyderabad|pune|noida|gurgaon", _s.lower()):
+                    continue
+                if 2 <= len(_s.split()) <= 5:
+                    _seller = _s
+                    break
+        if _seller and not fields["company_name"]:
+            fields["company_name"] = _seller
+        _pos = re.search(r"State\s*Name\s*[:\-]\s*\w+\s*,\s*Code\s*[:\-]\s*(\d{2})", text, re.IGNORECASE)
+        if _pos:
+            fields["place_of_supply"] = _pos.group(1)
+        _bm = re.search(r"Buyer\s*\(?\s*Bill\s*to\)?|Bill\s*To\s*\(?\s*Buyer\)?|\bBilling\s+(?:Address|Details)\b", text, re.IGNORECASE)
+        if _bm:
+            _bname = []
+            for _ln in text[_bm.end():].splitlines():
+                _s = _ln.strip()
+                if not _s:
+                    continue
+                if re.search(r"gstin|state name|e-?mail|contact|phone|pan\b", _s.lower()):
+                    break
+                if re.match(r"^[\d,.\- /]+$", _s):
+                    break
+                _bname.append(_s)
+                if len(_bname) >= 3:
+                    break
+            if _bname:
+                fields["buyer_name"] = " ".join(_bname)
 
     for i, ln in enumerate(lines):
         if fields["company_name"]:
@@ -587,6 +662,25 @@ def parse_invoice_fields(text: str) -> Dict[str, Any]:
             if m and line.count(m.group(1)) == 1 and line.count("/") + line.count("-") <= 2:
                 fields["invoice_date"] = m.group(1).strip()
                 break
+    if not fields["invoice_date"]:
+        # day-MONTH-year / day MONTH year: "30-Apr-25", "15 March 2024".
+        # Skip financial-year / "from" dates (e.g. "(from 1-Apr-24)") — they are
+        # not the invoice date.
+        MONTHS = {"jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
+                  "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12}
+        for dm in re.finditer(
+            r"\b(\d{1,2})[\s\-.](Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?[\s\-.]\s*(\d{2,4})\b",
+            text,
+            re.IGNORECASE,
+        ):
+            ctx = text[max(0, dm.start() - 14):dm.start()].lower()
+            if "from" in ctx or " fy" in ctx or ctx.rstrip().endswith("("):
+                continue
+            dd = int(dm.group(1))
+            mm = MONTHS[dm.group(2)[:3].lower()]
+            yy = dm.group(3)
+            fields["invoice_date"] = f"{dd:02d}/{mm:02d}/{yy}"
+            break
     if not fields["invoice_date"]:
         # month-name date: "JAN 5, 2019" / "January 5, 2019"
         MONTHS = {"jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
@@ -709,13 +803,48 @@ def parse_invoice_fields(text: str) -> Dict[str, Any]:
             elif fields["sgst"] is None:
                 fields["sgst"] = val
 
+    # Tax breakup for "X Payable <amt> % <rate>" / "X Payable <rate>% : <amt>"
+    # — standard GST lines where amount and rate land on separate tokens.
+    for _ttype, _key in (("CGST", "cgst"), ("SGST", "sgst"), ("IGST", "igst")):
+        for _m in re.finditer(rf"\b{_ttype}\b\s*Payable", text, re.IGNORECASE):
+            _win = text[_m.end():_m.end() + 60]
+            _rm = re.search(r"%\s*(\d+(?:\.\d+)?)", _win)
+            _rate = float(_rm.group(1)) if _rm else None
+            _amts = re.findall(r"(?<!%)\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)", _win)
+            _amt = None
+            for _a in _amts:
+                _v = _num(_a)
+                if _v is None:
+                    continue
+                if _rate is not None and abs(_v - _rate) < 0.01:
+                    continue
+                _amt = _v
+                break
+            if _amt is not None:
+                fields[_key] = _amt
+                if _rate is not None and fields["gst_rate"] is None:
+                    fields["gst_rate"] = _rate
+
     hsn_match = re.search(
-        r"(?:[Hh]?SN\s*Code|HSN\s*SAC|SAC)\s*[:\-]?\s*(\d{4,8})",
-        text,
-        re.IGNORECASE,
+        r"HSN/SAC[^\d]{0,120}?(\d{4,8})", text, re.IGNORECASE | re.DOTALL
+    ) or re.search(
+        r"(?:[Hh]?SN\s*Code|HSN\s*SAC|SAC)\s*[:\-]?\s*(\d{4,8})", text, re.IGNORECASE
     )
     if hsn_match:
         fields["hsn_code"] = hsn_match.group(1)
+
+    # Total in words — Indian invoices state the amount in words after
+    # "Amount Chargeable (in words)" (often preceded by an "E. & O.E" note).
+    _tiwm = re.search(r"Amount\s+Chargeable\s*\(in\s+words\)", text, re.IGNORECASE)
+    if _tiwm:
+        for _l in text[_tiwm.end():].splitlines():
+            _s = _l.strip()
+            if not _s or re.search(r"e\.?\s*&\s*o\.?e", _s.lower()):
+                continue
+            if re.search(r"gstin|declaration|company|bank|hsn|taxable|signature|authorised|in words", _s.lower()):
+                break
+            fields["total_in_words"] = _s
+            break
 
     qty_match = re.search(r"(?:Qty|Quantity)\s*[:\-]?\s*\n?\s*(\d+(?:\.\d+)?)", text, re.IGNORECASE)
     if not qty_match:
@@ -744,11 +873,47 @@ def parse_invoice_fields(text: str) -> Dict[str, Any]:
         if total_qty:
             fields["quantity"] = round(total_qty, 2)
 
+    # --- post-processing / derivations ------------------------------------
+    # Trim trailing FY/period annotations from the supplier name
+    # ("Alok Misra & Co. (FY 2024-25) - (from 1-Apr-24)" -> "Alok Misra & Co.").
+    if fields["company_name"]:
+        _cn = re.split(r"\s*[\(\[]\s*(?:fy|from|estd|established|prop\.?)",
+                       fields["company_name"], flags=re.IGNORECASE)[0]
+        _cn = _cn.strip().rstrip(" -,")
+        if _cn:
+            fields["company_name"] = _cn
+    # Buyer name = name portion of the bill-to block (drop the address lines).
+    _ADDR_STOP = ("pocket", "sector", "flat", "plot", "building", "near", "opp",
+                  "floor", "road", "street", "nagar", "colony", "village",
+                  "district", "city", "pin", "house", "door", "shop", "wing",
+                  "block", "s/o", "w/o", "c/o", "landmark")
+    if fields.get("buyer_name"):
+        _name_parts = []
+        for _w in fields["buyer_name"].split():
+            if any(s in _w.lower() for s in _ADDR_STOP):
+                break
+            _name_parts.append(_w)
+        if _name_parts:
+            fields["buyer_name"] = " ".join(_name_parts)
+    # taxable_value: prefer found; else a single line item; else total minus tax
+    # (Indian GST totals are tax-inclusive).
+    if fields["taxable_value"] is None or fields["taxable_value"] == 0.0:
+        _items = fields.get("line_items") or []
+        if len(_items) == 1 and _items[0].get("taxable"):
+            fields["taxable_value"] = _items[0]["taxable"]
+        if fields["taxable_value"] is None or fields["taxable_value"] == 0.0:
+            _tx = (fields["cgst"] or 0.0) + (fields["sgst"] or 0.0) + (fields["igst"] or 0.0)
+            if fields["total_amount"] and _tx:
+                fields["taxable_value"] = round(fields["total_amount"] - _tx, 2)
+
     # Field completeness = share of expected header fields found — NOT
     # recognition certainty. Real recognizer score travels separately as
     # fields["rec_score"] when OCR ran (review F-12).
-    found = sum(1 for k, v in fields.items() if k not in ("field_completeness", "rec_score") and v is not None and v != 0.0)
-    fields["field_completeness"] = min(found / 10.0, 1.0)
+    _meta = ("field_completeness", "rec_score", "raw_text", "source", "warnings",
+             "line_items", "item_description")
+    _expected = [k for k in fields if k not in _meta]
+    found = sum(1 for k in _expected if fields[k] is not None and fields[k] != 0.0)
+    fields["field_completeness"] = min(found / len(_expected), 1.0) if _expected else 0.0
     return fields
 
 

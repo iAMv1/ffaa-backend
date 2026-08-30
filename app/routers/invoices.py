@@ -153,6 +153,10 @@ def _save_invoice(
         sgst=ocr_result.get("sgst") or 0.0,
         igst=ocr_result.get("igst") or 0.0,
         hsn_code=ocr_result.get("hsn_code"),
+        supplier_gstin=ocr_result.get("supplier_gstin"),
+        buyer_name=ocr_result.get("buyer_name"),
+        buyer_gstin=ocr_result.get("buyer_gstin"),
+        place_of_supply=ocr_result.get("place_of_supply"),
         quantity=ocr_result.get("quantity"),
         # real recognizer score when OCR ran; completeness ratio otherwise
         ocr_confidence=(
