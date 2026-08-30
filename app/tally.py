@@ -18,39 +18,32 @@ def _ledger(name: str, amount: float, deemed_positive: bool) -> str:
       </ALLLEDGERENTRIES.LIST>"""
 
 
-def _inventory_lines(inv, is_sales: bool) -> str:
-    """ALLINVENTORYENTRIES per InvoiceItem. Fallback single stock if no items."""
-    items = list(getattr(inv, "items", None) or [])
-    if not items:
-        desc = (inv.item_description or "Goods").strip() or "Goods"
-        qty = float(inv.quantity or 1)
-        taxable = float(inv.taxable_value or inv.total_amount or 0)
-        rate = taxable / qty if qty else taxable
-        items = [
-            type(
-                "X",
-                (),
-                {
-                    "description": desc,
-                    "quantity": qty,
-                    "rate": rate,
-                    "taxable_value": taxable,
-                    "hsn_code": inv.hsn_code,
-                    "gst_rate": inv.gst_rate or 0,
-                },
-            )()
-        ]
+def _fallback_stock_item(inv) -> object:
+    """Single stock row when an invoice has no line items (matches prior dynamic type)."""
+    qty = float(inv.quantity or 1)
+    taxable = float(inv.taxable_value or inv.total_amount or 0)
+    rate = taxable / qty if qty else taxable
+    return type(
+        "X",
+        (),
+        {
+            "description": (inv.item_description or "Goods").strip() or "Goods",
+            "quantity": qty,
+            "rate": rate,
+            "taxable_value": taxable,
+            "hsn_code": inv.hsn_code,
+            "gst_rate": inv.gst_rate or 0,
+        },
+    )()
 
-    out = []
-    for it in items:
-        name = escape((it.description or "Item")[:100])
-        qty = float(it.quantity or 1)
-        rate = float(it.rate or 0)
-        amt = float(it.taxable_value or (qty * rate))
-        hsn = escape(str(it.hsn_code or inv.hsn_code or ""))
-        # sales: stock out negative qty convention varies; keep amount + qty positive, type handles
-        out.append(
-            f"""
+
+def _inventory_entry(it, is_sales: bool, inv_hsn) -> str:
+    name = escape((it.description or "Item")[:100])
+    qty = float(it.quantity or 1)
+    rate = float(it.rate or 0)
+    amt = float(it.taxable_value or (qty * rate))
+    hsn = escape(str(it.hsn_code or inv_hsn or ""))
+    return f"""
       <ALLINVENTORYENTRIES.LIST>
         <STOCKITEMNAME>{name}</STOCKITEMNAME>
         <ISDEEMEDPOSITIVE>{"No" if is_sales else "Yes"}</ISDEEMEDPOSITIVE>
@@ -60,13 +53,29 @@ def _inventory_lines(inv, is_sales: bool) -> str:
         <BILLEDQTY>{qty:.2f} nos</BILLEDQTY>
         <HSNCODE>{hsn}</HSNCODE>
       </ALLINVENTORYENTRIES.LIST>"""
-        )
-    return "".join(out)
+
+
+def _inventory_lines(inv, is_sales: bool) -> str:
+    """ALLINVENTORYENTRIES per InvoiceItem. Fallback single stock if no items."""
+    items = list(getattr(inv, "items", None) or [])
+    if not items:
+        items = [_fallback_stock_item(inv)]
+    return "".join(_inventory_entry(it, is_sales, inv.hsn_code) for it in items)
+
+
+def _tax_ledgers(cgst: float, sgst: float, igst: float, tax_positive: bool) -> str:
+    lines = ""
+    if cgst:
+        lines += _ledger("CGST", cgst, tax_positive)
+    if sgst:
+        lines += _ledger("SGST", sgst, tax_positive)
+    if igst:
+        lines += _ledger("IGST", igst, tax_positive)
+    return lines
 
 
 def invoice_to_voucher_xml(inv) -> str:
     is_sales = (inv.invoice_type or "sales").lower() == "sales"
-    vtype = "Sales" if is_sales else "Purchase"
     party = inv.company_name or "Party"
     amount = float(inv.total_amount or 0)
     taxable = float(inv.taxable_value or amount)
@@ -76,31 +85,13 @@ def invoice_to_voucher_xml(inv) -> str:
     inv_no = escape(inv.invoice_number or str(inv.id))
     inv_items = list(getattr(inv, "items", None) or [])
     use_inventory = bool(inv_items or inv.item_description)
+    vtype = "Sales" if is_sales else "Purchase"
 
-    if is_sales:
-        lines = _ledger(party, amount, True)
-        if use_inventory:
-            lines += _inventory_lines(inv, True)
-        else:
-            lines += _ledger("Sales", taxable, False)
-        if cgst:
-            lines += _ledger("CGST", cgst, False)
-        if sgst:
-            lines += _ledger("SGST", sgst, False)
-        if igst:
-            lines += _ledger("IGST", igst, False)
-    else:
-        if use_inventory:
-            lines = _inventory_lines(inv, False)
-        else:
-            lines = _ledger("Purchase", taxable, True)
-        if cgst:
-            lines += _ledger("CGST", cgst, True)
-        if sgst:
-            lines += _ledger("SGST", sgst, True)
-        if igst:
-            lines += _ledger("IGST", igst, True)
-        lines += _ledger(party, amount, False)
+    body = _ledger(party, amount, True) if is_sales else ""
+    body += _inventory_lines(inv, is_sales) if use_inventory else _ledger(vtype, taxable, not is_sales)
+    body += _tax_ledgers(cgst, sgst, igst, not is_sales)
+    if not is_sales:
+        body += _ledger(party, amount, False)
 
     return f"""
     <TALLYMESSAGE xmlns:UDF="TallyUDF">
@@ -110,7 +101,7 @@ def invoice_to_voucher_xml(inv) -> str:
         <VOUCHERNUMBER>{inv_no}</VOUCHERNUMBER>
         <NARRATION>Inv {inv_no}</NARRATION>
         <PARTYLEDGERNAME>{escape(party)}</PARTYLEDGERNAME>
-        <ISINVOICE>Yes</ISINVOICE>{lines}
+        <ISINVOICE>Yes</ISINVOICE>{body}
       </VOUCHER>
     </TALLYMESSAGE>"""
 

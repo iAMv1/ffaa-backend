@@ -362,33 +362,36 @@ def structured_line_items_from_pdf(file_path: str) -> list[dict]:
     return items
 
 
+def _paddle_arrays(r):
+    """(rec_texts, rec_polys, rec_boxes) from a PaddleOCR result, object or dict."""
+    texts = getattr(r, "rec_texts", None) or (r.get("rec_texts") if isinstance(r, dict) else None)
+    polys = getattr(r, "rec_polys", None) or (r.get("rec_polys") if isinstance(r, dict) else None)
+    boxes = getattr(r, "rec_boxes", None) or (r.get("rec_boxes") if isinstance(r, dict) else None)
+    return texts, polys, boxes
+
+
+def _word_xy(polys, boxes, i):
+    """Top-left x0,y0 for word i from polys (preferred) or flat rec_boxes."""
+    if polys and i < len(polys) and polys[i] is not None:
+        return min(pt[0] for pt in polys[i]), min(pt[1] for pt in polys[i])
+    if boxes and i < len(boxes) and boxes[i] is not None:
+        try:
+            b = boxes[i]
+            return float(b[0]), float(b[1])
+        except Exception:
+            return 0.0, 0.0
+    return 0.0, 0.0
+
+
 def _ocr_words(result) -> list[tuple[str, float, float]]:
-    """(text, x0, y0) lines from PaddleOCR result objects (rec_texts + boxes)."""
+    """(text, x0, y0) from PaddleOCR result objects (rec_texts + boxes)."""
     out = []
     for r in result:
-        texts = getattr(r, "rec_texts", None)
-        if not texts and isinstance(r, dict):
-            texts = r.get("rec_texts")
+        texts, polys, boxes = _paddle_arrays(r)
         if not texts:
             continue
-        polys = getattr(r, "rec_polys", None)
-        if not polys and isinstance(r, dict):
-            polys = r.get("rec_polys")
-        boxes = getattr(r, "rec_boxes", None)
-        if not boxes and isinstance(r, dict):
-            boxes = r.get("rec_boxes")
         for i, t in enumerate(texts):
-            x = y = 0.0
-            if i < len(polys) and polys[i] is not None:
-                x = min(pt[0] for pt in polys[i])
-                y = min(pt[1] for pt in polys[i])
-            elif i < len(boxes) and boxes[i] is not None:
-                # rec_boxes are flat [x1, y1, x2, y2]; anything else → origin
-                try:
-                    b = boxes[i]
-                    x, y = float(b[0]), float(b[1])
-                except Exception:
-                    x = y = 0.0
+            x, y = _word_xy(polys, boxes, i)
             out.append((str(t), x, y))
     return out
 

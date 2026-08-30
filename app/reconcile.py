@@ -9,6 +9,28 @@ def _narr_score(a: str, b: str) -> float:
     return fuzz.token_set_ratio(a.lower(), b.lower()) / 100.0
 
 
+def _date_increment(invoice, bank_row, window: int) -> float | None:
+    """0.2*closeness, or None when the date is outside the window (hard reject)."""
+    if not (invoice.invoice_date and bank_row.date):
+        return 0.0
+    delta = abs((invoice.invoice_date - bank_row.date).days)
+    if delta > window:
+        return None
+    return 0.2 * (1 - delta / (window + 1))
+
+
+def _narr_contrib(invoice, bank_row) -> float:
+    inv_no = (invoice.invoice_number or "").strip()
+    narr = bank_row.narration or ""
+    company = invoice.company_name or ""
+    if inv_no and inv_no.lower() in narr.lower():
+        return 0.25
+    s = 0.15 * _narr_score(company, narr)
+    if inv_no:
+        s += 0.15 * (fuzz.partial_ratio(inv_no.lower(), narr.lower()) / 100.0)
+    return s
+
+
 def match_score(invoice, bank_row, date_window_days: int = 3) -> float:
     """0..1. Amount must match. Date window. RapidFuzz narration."""
     inv_amt = float(invoice.total_amount or 0)
@@ -17,26 +39,12 @@ def match_score(invoice, bank_row, date_window_days: int = 3) -> float:
     bank_amt = float(bank_row.credit or 0) or float(bank_row.debit or 0)
     if abs(bank_amt - inv_amt) > 0.05:
         return 0.0
-
     score = 0.5
-    if invoice.invoice_date and bank_row.date:
-        delta = abs((invoice.invoice_date - bank_row.date).days)
-        if delta > date_window_days:
-            return 0.0
-        score += 0.2 * (1 - delta / (date_window_days + 1))
-
-    inv_no = (invoice.invoice_number or "").strip()
-    narr = bank_row.narration or ""
-    company = invoice.company_name or ""
-
-    if inv_no and inv_no.lower() in narr.lower():
-        score += 0.25
-    else:
-        # ponytail: partial_ratio catches INV-2024-001 inside long NEFT string
-        if inv_no:
-            score += 0.15 * (fuzz.partial_ratio(inv_no.lower(), narr.lower()) / 100.0)
-        score += 0.15 * _narr_score(company, narr)
-
+    dinc = _date_increment(invoice, bank_row, date_window_days)
+    if dinc is None:
+        return 0.0
+    score += dinc
+    score += _narr_contrib(invoice, bank_row)
     return min(score, 1.0)
 
 
