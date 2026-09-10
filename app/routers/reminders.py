@@ -128,7 +128,3 @@ def delete_reminder(
     return {"deleted": reminder_id}
 
 
-@router.get("/reminders/templates", response_model=list[schemas.ReminderTemplate])
-def list_templates(user: models.User = Depends(current_active_user)):
-    from ..email_service import DEFAULT_TEMPLATE
-    return [schemas.ReminderTemplate(**DEFAULT_TEMPLATE)]

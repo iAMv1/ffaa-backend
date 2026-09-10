@@ -77,3 +77,22 @@ def resolve_file_path(client_name: str, rel_path: str, owner_id: int | None = No
     except Exception:
         return None
     return None
+
+def safe_unlink(archived: str | None, owner_id: int | None = None) -> bool:
+    """Delete an archived file iff it still lives inside the owner's client
+    root (S1 audit fix: deletes must not leave orphan files on disk)."""
+    if not archived:
+        return False
+    try:
+        target = Path(archived).resolve()
+        base = _client_root(owner_id).resolve()
+        target.relative_to(base)
+    except (OSError, ValueError):
+        return False
+    try:
+        if target.is_file():
+            target.unlink()
+            return True
+    except OSError:
+        return False
+    return False

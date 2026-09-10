@@ -1,4 +1,5 @@
 import logging
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, Request
@@ -33,6 +34,8 @@ _BILLING_MIGRATION_COLUMNS = [
     ("billing_subscriptions", "rzp_status", "TEXT"),
     ("billing_subscriptions", "grace_ends_at", "DATETIME"),
     ("billing_subscriptions", "rzp_short_url", "TEXT"),
+    # Audit fix S1/M10 companion: surface text-vs-OCR provenance on invoices.
+    ("invoices", "source", "VARCHAR(16)"),
 ]
 
 
@@ -83,7 +86,7 @@ async def lifespan(app: FastAPI):
         pass
     _run_billing_migration()
     seed_plans()  # idempotent free/pro catalog
-    ensure_rzp_plan(get_plan(BillingSession(), "pro") or None) if False else None  # noqa: E501 (lazy; runs on first subscribe)
+    # RZP plan creation is lazy (runs on first POST /billing/subscriptions)
     app.state.billing_gate_down = not catalog_ready()
     if app.state.billing_gate_down:
         logger.error(
@@ -95,9 +98,15 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="FFAA - Free Accounting Automation", version="0.1.0", lifespan=lifespan)
 
+CORS_ENV = os.environ.get("FFAA_CORS_ORIGINS", "")
+if CORS_ENV.strip():
+    _cors_origins = [o.strip() for o in CORS_ENV.split(",") if o.strip()]
+else:
+    _cors_origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -9,7 +9,7 @@ from .. import models, schemas
 from ..database import SessionLocal
 from ..bank_parse import parse_bank_file
 from ..reconcile import best_matches
-from ..folders import archive_file
+from ..folders import archive_file, safe_unlink
 from ..tenancy import get_owned_client, require_entitlement
 from ..users import current_active_user
 
@@ -92,6 +92,11 @@ def upload_bank(
         temp_path, client.name, stmt_date, "Bank Statements", os.path.basename(temp_path),
         owner_id=user.id,
     )
+    # S1 (audit): staging copy is temporary once archived.
+    try:
+        os.remove(temp_path)
+    except OSError:
+        pass
 
     created = []
     now = datetime.now()
@@ -150,11 +155,13 @@ def delete_bank_statement(
     )
     if not bs:
         raise HTTPException(status_code=404, detail="Bank statement not found")
+    archived_path = bs.file_path
     db.query(models.Reconciliation).filter(
         models.Reconciliation.bank_statement_id == bank_id
     ).delete()
     db.delete(bs)
     db.commit()
+    safe_unlink(archived_path, user.id)
     return {"deleted": bank_id}
 
 

@@ -1,20 +1,20 @@
-from pydantic import BaseModel, ConfigDict
-from typing import Optional, List
+from pydantic import BaseModel, ConfigDict, Field
+from typing import Literal, Optional, List
 from datetime import date, datetime
 
 class ClientBase(BaseModel):
-    name: str
-    email: Optional[str] = None
-    gst_number: Optional[str] = None
+    name: str = Field(min_length=1, max_length=255)
+    email: Optional[str] = Field(default=None, max_length=255)
+    gst_number: Optional[str] = Field(default=None, max_length=50)
     address: Optional[str] = None
 
 class ClientCreate(ClientBase):
     pass
 
 class ClientUpdate(BaseModel):
-    name: Optional[str] = None
-    email: Optional[str] = None
-    gst_number: Optional[str] = None
+    name: Optional[str] = Field(default=None, min_length=1, max_length=255)
+    email: Optional[str] = Field(default=None, max_length=255)
+    gst_number: Optional[str] = Field(default=None, max_length=50)
     address: Optional[str] = None
 
 class ClientOut(ClientBase):
@@ -24,15 +24,15 @@ class ClientOut(ClientBase):
 
 class InvoiceItemBase(BaseModel):
     description: str
-    hsn_code: Optional[str] = None
-    quantity: float
-    rate: float
-    taxable_value: float
-    gst_rate: float = 0.0
-    cgst: float = 0.0
-    sgst: float = 0.0
-    igst: float = 0.0
-    line_total: float
+    hsn_code: Optional[str] = Field(default=None, max_length=50)
+    quantity: float = Field(ge=0)
+    rate: float = Field(ge=0)
+    taxable_value: float = Field(ge=0)
+    gst_rate: float = Field(default=0.0, ge=0, le=100)
+    cgst: float = Field(default=0.0, ge=0)
+    sgst: float = Field(default=0.0, ge=0)
+    igst: float = Field(default=0.0, ge=0)
+    line_total: float = Field(ge=0)
 
 class InvoiceItemCreate(InvoiceItemBase):
     pass
@@ -43,23 +43,24 @@ class InvoiceItemOut(InvoiceItemBase):
 
 class InvoiceBase(BaseModel):
     client_id: int
-    invoice_number: Optional[str] = None
+    invoice_number: Optional[str] = Field(default=None, max_length=100)
     invoice_date: Optional[date] = None
-    company_name: Optional[str] = None
-    gst_rate: float = 0.0
-    taxable_value: float = 0.0
-    total_amount: float = 0.0
-    cgst: float = 0.0
-    sgst: float = 0.0
-    igst: float = 0.0
-    hsn_code: Optional[str] = None
-    supplier_gstin: Optional[str] = None
-    buyer_name: Optional[str] = None
-    buyer_gstin: Optional[str] = None
-    place_of_supply: Optional[str] = None
-    quantity: Optional[float] = None
+    company_name: Optional[str] = Field(default=None, max_length=255)
+    gst_rate: float = Field(default=0.0, ge=0, le=100)
+    taxable_value: float = Field(default=0.0, ge=0)
+    total_amount: float = Field(default=0.0, ge=0)
+    cgst: float = Field(default=0.0, ge=0)
+    sgst: float = Field(default=0.0, ge=0)
+    igst: float = Field(default=0.0, ge=0)
+    hsn_code: Optional[str] = Field(default=None, max_length=50)
+    supplier_gstin: Optional[str] = Field(default=None, max_length=15)
+    buyer_name: Optional[str] = Field(default=None, max_length=255)
+    buyer_gstin: Optional[str] = Field(default=None, max_length=15)
+    place_of_supply: Optional[str] = Field(default=None, max_length=2)
+    source: Optional[str] = Field(default=None, max_length=16)
+    quantity: Optional[float] = Field(default=None, ge=0)
     item_description: Optional[str] = None
-    invoice_type: str = "sales"
+    invoice_type: Literal["sales", "purchase"] = "sales"
 
 class InvoiceCreate(InvoiceBase):
     items: Optional[List[InvoiceItemCreate]] = []
@@ -69,7 +70,6 @@ class InvoiceOut(InvoiceBase):
     status: str
     approved: bool
     ocr_confidence: Optional[float] = None
-    file_path: Optional[str] = None
     is_duplicate: bool = False
     duplicate_of: Optional[int] = None
     items: List[InvoiceItemOut] = []
@@ -80,8 +80,8 @@ class BankStatementBase(BaseModel):
     client_id: int
     date: date
     narration: str
-    debit: float = 0.0
-    credit: float = 0.0
+    debit: float = Field(default=0.0, ge=0)
+    credit: float = Field(default=0.0, ge=0)
     balance: float = 0.0
 
 class BankStatementCreate(BankStatementBase):
@@ -91,7 +91,6 @@ class BankStatementOut(BankStatementBase):
     id: int
     reconciled: bool
     invoice_id: Optional[int] = None
-    file_path: Optional[str] = None
     balance: Optional[float] = None
     model_config = ConfigDict(from_attributes=True)
 

@@ -9,7 +9,7 @@ import shutil
 from .. import models, schemas
 from ..database import SessionLocal
 from ..ocr import process_invoice_document
-from ..folders import archive_file
+from ..folders import archive_file, safe_unlink
 from ..audit import audit_invoice
 from ..services import scan_and_flag_duplicates
 from ..tenancy import get_owned_client, require_entitlement
@@ -107,39 +107,48 @@ def _save_invoice(
                 )
             f.write(chunk)
 
-    ocr_result = process_invoice_document(file_path)
+    # S1 (audit): the staged copy is temporary — the per-owner archive is the
+    # durable copy. Whole path wrapped so an OCR failure or archive failure
+    # still removes the staging file (no unbounded uploads/ growth).
+    try:
+        ocr_result = process_invoice_document(file_path)
 
-    client = None
-    if client_id is not None:
-        client = get_owned_client(db, user, client_id)
-    if not client:
-        company_name = ocr_result.get("company_name") or "Unknown"
-        # Auto-mint lookup is owner-scoped: identical company names across
-        # tenants must stay separate clients.
-        client = (
-            db.query(models.Client)
-            .filter(models.Client.name == company_name, models.Client.owner_id == user.id)
-            .first()
-        )
+        client = None
+        if client_id is not None:
+            client = get_owned_client(db, user, client_id)
         if not client:
-            require_entitlement(db, user, "client_auto_mint")
-            client = models.Client(
-                name=company_name, auto_created=True, owner_id=user.id,
-                created_at=datetime.now(),
+            company_name = ocr_result.get("company_name") or "Unknown"
+            # Auto-mint lookup is owner-scoped: identical company names across
+            # tenants must stay separate clients.
+            client = (
+                db.query(models.Client)
+                .filter(models.Client.name == company_name, models.Client.owner_id == user.id)
+                .first()
             )
-            db.add(client)
-            db.commit()
-            db.refresh(client)
+            if not client:
+                require_entitlement(db, user, "client_auto_mint")
+                client = models.Client(
+                    name=company_name, auto_created=True, owner_id=user.id,
+                    created_at=datetime.now(),
+                )
+                db.add(client)
+                db.commit()
+                db.refresh(client)
 
-    invoice_date = _parse_invoice_date(ocr_result.get("invoice_date"))
+        invoice_date = _parse_invoice_date(ocr_result.get("invoice_date"))
 
-    # ponytail: archive to Client/Year/Month/{Sales,Purchase}/
-    doc_date = invoice_date or datetime.now().date()
-    category = "Sales" if invoice_type == "sales" else "Purchase"
-    archived = archive_file(
-        file_path, client.name, doc_date, category, os.path.basename(file_path),
-        owner_id=user.id,
-    )
+        # ponytail: archive to Client/Year/Month/{Sales,Purchase}/
+        doc_date = invoice_date or datetime.now().date()
+        category = "Sales" if invoice_type == "sales" else "Purchase"
+        archived = archive_file(
+            file_path, client.name, doc_date, category, os.path.basename(file_path),
+            owner_id=user.id,
+        )
+    finally:
+        try:
+            os.remove(file_path)
+        except OSError:
+            pass
 
     invoice = models.Invoice(
         client_id=client.id,
@@ -157,6 +166,7 @@ def _save_invoice(
         buyer_name=ocr_result.get("buyer_name"),
         buyer_gstin=ocr_result.get("buyer_gstin"),
         place_of_supply=ocr_result.get("place_of_supply"),
+        source=ocr_result.get("source"),
         quantity=ocr_result.get("quantity"),
         # real recognizer score when OCR ran; completeness ratio otherwise
         ocr_confidence=(
@@ -262,14 +272,6 @@ def list_invoices(
     if client_id is not None:
         q = q.filter(models.Invoice.client_id == client_id)
     return [_out(i) for i in q.offset(skip).limit(limit).all()]
-@router.get("/invoices/{invoice_id}", response_model=schemas.InvoiceOut)
-def get_invoice(
-    invoice_id: int,
-    db: Session = Depends(get_db),
-    user: models.User = Depends(current_active_user),
-):
-    invoice = _get_owned_invoice(db, user, invoice_id)
-    return _out(invoice)
 
 @router.put("/invoices/{invoice_id}/review", response_model=schemas.InvoiceOut)
 def review_invoice(
@@ -306,6 +308,18 @@ def approve_invoice(
     user: models.User = Depends(current_active_user),
 ):
     invoice = _get_owned_invoice(db, user, invoice_id)
+    # S3 (audit): when the parts were extracted and they don't add up, block
+    # the approval — the user should fix fields via review first. Rows with no
+    # taxable breakdown (taxable_value == 0) are not gateable; allow those.
+    audit_report = audit_invoice(invoice)
+    if invoice.taxable_value and not audit_report["math_ok"]:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "detail": "Invoice math does not add up — review the fields before approving",
+                "audit": audit_report,
+            },
+        )
     if invoice.file_path:
         # ponytail: copy approved invoice to Final Books leaf
         doc_date = invoice.invoice_date or datetime.now().date()
@@ -319,7 +333,10 @@ def approve_invoice(
                 owner_id=user.id,
             )
         except Exception:
-            pass
+            logger.warning(
+                "Final Books archive failed for invoice %s — approved without the copy",
+                invoice_id, exc_info=True,
+            )
     invoice.approved = True
     invoice.status = "approved"
     db.commit()
@@ -351,4 +368,5 @@ def delete_invoice(
         bs.reconciled = False
     db.delete(invoice)
     db.commit()
+    safe_unlink(invoice.file_path, user.id)
     return {"deleted": invoice_id}

@@ -392,7 +392,9 @@ def test_delete_invoice_cascade(client):
     r = client.delete(f"/api/v1/invoices/{inv_id}")
     assert r.status_code == 200
     # cascade: invoice gone, reconciliation gone, bank unlinked + open
-    assert client.get(f"/api/v1/invoices/{inv_id}").status_code == 404
+    # single-GET /invoices/{id} was removed as an orphan surface — probe the
+    # owner-scoped list instead (cascade still must remove the row).
+    assert all(i["id"] != inv_id for i in client.get("/api/v1/invoices").json())
     banks = client.get(f"/api/v1/bank-statements?client_id={cid}").json()
     assert len(banks) == 1
     assert banks[0]["invoice_id"] is None
@@ -466,7 +468,7 @@ def test_delete_client_cascade(client):
     assert r.status_code == 200
     clients = client.get("/api/v1/clients").json()
     assert all(c["id"] != cid for c in clients)
-    assert client.get(f"/api/v1/invoices/{inv_id}").status_code == 404
+    assert all(i["id"] != inv_id for i in client.get("/api/v1/invoices").json())
 
 
 def test_gstin_validation():

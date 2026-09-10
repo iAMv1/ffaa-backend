@@ -5,7 +5,7 @@ from fastapi.responses import FileResponse
 
 from .. import models, schemas
 from ..database import SessionLocal
-from ..folders import list_client_folders, resolve_file_path
+from ..folders import list_client_folders, resolve_file_path, safe_unlink
 from ..tenancy import get_owned_client, require_entitlement
 from ..users import current_active_user
 
@@ -93,6 +93,15 @@ def delete_client(
     user: models.User = Depends(current_active_user),
 ):
     client = get_owned_client(db, user, client_id)
+    # S1 (audit): collect archived file paths before the DB cascade so the
+    # on-disk copies can be removed after the commit.
+    archived_paths = [
+        p for (p,) in db.query(models.Invoice.file_path)
+        .filter(models.Invoice.client_id == client_id) if p
+    ] + [
+        p for (p,) in db.query(models.BankStatement.file_path)
+        .filter(models.BankStatement.client_id == client_id) if p
+    ]
     inv_ids = [i.id for i in db.query(models.Invoice.id).filter(models.Invoice.client_id == client_id)]
     if inv_ids:
         # null duplicate_of on surviving invoices that point into the deleted set
@@ -123,6 +132,8 @@ def delete_client(
     db.query(models.EmailReminder).filter(models.EmailReminder.client_id == client_id).delete()
     db.delete(client)
     db.commit()
+    for p in archived_paths:
+        safe_unlink(p, user.id)
     return {"deleted": client_id}
 
 

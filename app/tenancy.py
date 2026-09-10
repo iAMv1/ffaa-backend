@@ -68,6 +68,11 @@ def require_entitlement(db: Session, user: "models.User", action: str) -> None:
     if cap is None:  # unlimited
         return
 
+    # TZ note (audit defer): the app clock is naive server-local EVERYWHERE —
+    # created_at writes, reconcile horizons, reminder windows. Localizing only
+    # this cap window to UTC desyncs it from stored rows. Unify the clock
+    # domain atomically (single migration touching every writer) or keep
+    # consistent local time. Deliberately deferred — see ffaa-full-audit.html.
     if cap_field == "invoice_cap":
         month_start = datetime.now().replace(
             day=1, hour=0, minute=0, second=0, microsecond=0

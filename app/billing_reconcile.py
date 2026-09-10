@@ -26,6 +26,17 @@ from datetime import datetime, timedelta
 from . import billing, models
 from .database import SessionLocal
 
+import logging
+
+logger = logging.getLogger("ffaa.billing_reconcile")
+
+try:
+    from razorpay.errors import RazorpayError
+
+    _RZP_ERRORS: tuple[type[Exception], ...] = (RazorpayError,)
+except ImportError:  # SDK absent — remote steps cannot run anyway
+    _RZP_ERRORS = (Exception,)
+
 
 def _remote_period_end(entity: dict) -> datetime | None:
     raw = entity.get("current_end")
@@ -57,8 +68,12 @@ def _heal_remote_drift(db, client, dry_run: bool) -> dict:
         counts["checked"] += 1
         try:
             remote = client.subscription.fetch(sub.rzp_subscription_id)
-        except Exception:
-            continue  # network/404 — leave to the next night
+        except _RZP_ERRORS:
+            logger.warning(
+                "RZP fetch failed for sub %s — leaving for the next night",
+                sub.rzp_subscription_id, exc_info=True,
+            )
+            continue
         remote_status = billing.RZP_STATUS_MAP.get(
             remote.get("status"), remote.get("status")
         )
@@ -77,7 +92,11 @@ def _heal_remote_drift(db, client, dry_run: bool) -> dict:
         # Missed charged payments: credit any paid invoice we don't have.
         try:
             invoices = client.invoice.all({"subscription_id": sub.rzp_subscription_id})
-        except Exception:
+        except _RZP_ERRORS:
+            logger.warning(
+                "RZP invoice fetch failed for sub %s — skipping missed-payment sweep",
+                sub.rzp_subscription_id, exc_info=True,
+            )
             invoices = {"items": []}
         for inv in invoices.get("items", []):
             if inv.get("status") != "paid":
@@ -153,8 +172,12 @@ def _sweep_orphans(db, client, dry_run: bool) -> int:
         try:
             client.payment.fetch(pay.razorpay_payment_id)
             continue  # exists on RZP — not an orphan
-        except Exception:
-            pass
+        except _RZP_ERRORS:
+            logger.warning(
+                "RZP payment fetch failed for %s — not marking abandoned",
+                pay.razorpay_payment_id, exc_info=True,
+            )
+            continue
         if not dry_run:
             pay.status = "abandoned"
             db.commit()

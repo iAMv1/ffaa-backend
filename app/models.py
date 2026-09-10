@@ -52,6 +52,7 @@ class Invoice(Base):
     buyer_name = Column(String(255), nullable=True)
     buyer_gstin = Column(String(15), nullable=True)
     place_of_supply = Column(String(2), nullable=True)
+    source = Column(String(16), nullable=True)  # text | ocr (audit M10)
     quantity = Column(Float, nullable=True)
     item_description = Column(Text, nullable=True)
     invoice_type = Column(String(20))  # sales or purchase
