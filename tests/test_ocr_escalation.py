@@ -443,3 +443,68 @@ def test_maybe_escalate_backend_failure_fails_open(monkeypatch):
     out = esc.maybe_escalate("invoice.pdf", original)
     assert out["total_amount"] == 5000.0  # original kept
     assert any("escalation failed" in w for w in out.get("warnings", []))
+
+
+def test_datalab_default_mode_is_fast(monkeypatch):
+    # cost: escalation is a second opinion on mostly-readable docs;
+    # fast ($6/1k) is the cheapest structured tier — balanced was wasteful.
+    from app.ocr_escalate import DatalabBackend
+
+    monkeypatch.delenv("FFAA_OCR_DATALAB_MODE", raising=False)
+    assert DatalabBackend().extraction_mode == "fast"
+
+
+def test_budget_exhausted_blocks_escalation(monkeypatch, tmp_path):
+    import app.ocr_escalate as esc
+
+    monkeypatch.setenv("FFAA_OCR_ESCALATION", "datalab")
+    monkeypatch.setenv("DATALAB_API_KEY", "test-key")
+    monkeypatch.setenv("FFAA_OCR_ESCALATION_BUDGET", "2")
+    monkeypatch.setenv("FFAA_OCR_ESCALATION_USAGE", str(tmp_path / "usage.json"))
+    esc._record_usage(2)  # free tier spent for this month
+    out = esc.maybe_escalate("invoice.pdf", _broken_fields())
+    assert out["total_amount"] == _broken_fields()["total_amount"]  # local kept
+    assert any("budget" in w.lower() for w in out.get("warnings", []))
+
+
+def test_budget_records_usage_on_success(monkeypatch, tmp_path):
+    import app.ocr_escalate as esc
+
+    monkeypatch.setenv("FFAA_OCR_ESCALATION", "datalab")
+    monkeypatch.setenv("DATALAB_API_KEY", "test-key")
+    monkeypatch.setenv("FFAA_OCR_ESCALATION_USAGE", str(tmp_path / "usage.json"))
+
+    class FakeBackend:
+        name = "datalab-cloud"
+
+        def extract(self, path):
+            return {"taxable_value": 1000.0, "cgst": 90.0, "sgst": 90.0,
+                    "igst": 0.0, "total_amount": 1180.0, "gst_rate": 18.0}
+
+    monkeypatch.setattr(esc, "get_backend", lambda: FakeBackend())
+    monkeypatch.setattr(esc, "_count_pages", lambda p: 3)
+    out = esc.maybe_escalate("invoice.pdf", _broken_fields())
+    assert out["source"] == "ocr+cloud"
+    month, pages = esc._read_usage()
+    assert pages == 3 and month == esc._current_month()
+
+
+def test_budget_unset_is_unlimited(monkeypatch, tmp_path):
+    import app.ocr_escalate as esc
+
+    monkeypatch.setenv("FFAA_OCR_ESCALATION", "datalab")
+    monkeypatch.setenv("DATALAB_API_KEY", "test-key")
+    monkeypatch.delenv("FFAA_OCR_ESCALATION_BUDGET", raising=False)
+    monkeypatch.setenv("FFAA_OCR_ESCALATION_USAGE", str(tmp_path / "usage.json"))
+    esc._record_usage(999)  # usage tracked but no budget -> never blocks
+
+    class FakeBackend:
+        name = "datalab-cloud"
+
+        def extract(self, path):
+            return {"total_amount": 1180.0, "taxable_value": 1000.0,
+                    "cgst": 90.0, "sgst": 90.0, "igst": 0.0, "gst_rate": 18.0}
+
+    monkeypatch.setattr(esc, "get_backend", lambda: FakeBackend())
+    out = esc.maybe_escalate("invoice.pdf", _broken_fields())
+    assert out["source"] == "ocr+cloud"
