@@ -19,6 +19,10 @@ from typing import Any
 import httpx
 
 from .audit import math_check
+from .ocr_cost import (
+    _budget_exhausted, _cache_get, _cache_put, _count_pages, _current_month,
+    _file_hash, _read_usage, _record_usage, _select_send_path,
+)
 
 # HTTP facade so tests can stub without patching the httpx module itself.
 _http = httpx
@@ -246,65 +250,33 @@ def _with_warning(fields: dict, warning: str) -> dict:
     return out
 
 
-def _current_month() -> str:
-    return time.strftime("%Y-%m")
+
+def _tiers() -> list[str]:
+    """Cost ladder, cheapest first. Default single tier = cost parity.
+    Pricier tiers run ONLY when a cheaper tier's result fails verification —
+    never as a blanket multi-call."""
+    raw = os.environ.get("FFAA_OCR_ESCALATION_TIERS", "fast")
+    tiers = [t.strip().lower() for t in raw.split(",") if t.strip()]
+    return [t for t in tiers if t in ("fast", "balanced", "accurate")] or ["fast"]
 
 
-def _usage_path() -> str:
-    return os.environ.get("FFAA_OCR_ESCALATION_USAGE") or os.path.join(
-        os.getcwd(), ".escalation_usage.json"
-    )
-
-
-def _read_usage() -> tuple[str, int]:
-    """(month, pages) from the local usage ledger; unreadable -> ('', 0)."""
-    try:
-        with open(_usage_path(), encoding="utf-8") as f:
-            d = json.load(f)
-        return str(d.get("month", "")), int(d.get("pages", 0))
-    except Exception:
-        return "", 0
-
-
-def _record_usage(pages: int) -> None:
-    month, used = _read_usage()
-    if month != _current_month():
-        month, used = _current_month(), 0
-    try:
-        with open(_usage_path(), "w", encoding="utf-8") as f:
-            json.dump({"month": month, "pages": used + max(0, pages)}, f)
-    except Exception:
-        pass  # a usage-file failure must never block extraction
-
-
-def _budget_exhausted(pages_needed: int) -> bool:
-    """Monthly page-budget guard for the free tier. FFAA_OCR_ESCALATION_BUDGET
-    unset/0 = unlimited (legacy behavior). New month resets the counter."""
-    try:
-        budget = int(os.environ.get("FFAA_OCR_ESCALATION_BUDGET", "0") or "0")
-    except ValueError:
-        budget = 0
-    if budget <= 0:
-        return False
-    month, used = _read_usage()
-    if month != _current_month():
-        return False
-    return used + pages_needed > budget
-
-
-def _count_pages(file_path: str) -> int:
-    try:
-        import fitz
-        with fitz.open(file_path) as doc:
-            return max(1, doc.page_count)
-    except Exception:
-        return 1
+def _verified(fields: dict) -> bool:
+    """The agent's proof standard: an escalation is trusted only when its own
+    math checks out on a gateable breakdown."""
+    return _math_of(fields) is True
 
 
 def maybe_escalate(file_path: str, ocr_result: dict) -> dict:
-    """The pipeline hook. Off by default; judge-first (a healthy extraction
-    never even constructs a backend); every failure fails open to the local
-    result with the reason recorded in warnings."""
+    """The pipeline hook — a verify-driven, cost-aware escalation agent.
+
+    Off by default; judge-first (a healthy extraction never reaches a
+    backend). When the judge fires:
+      1. cache lookup by file hash — a document never pays for the cloud twice;
+      2. monthly budget guard (fail-open);
+      3. page selection — multi-page PDFs send only weak/low-text pages;
+      4. the ladder ascends fast -> balanced -> accurate ONLY while
+         verification fails, stopping at the first proven tier.
+    Every failure path keeps the local extraction."""
     mode = os.environ.get("FFAA_OCR_ESCALATION", "off").strip().lower()
     if mode in ("", "off", "none"):
         return ocr_result
@@ -313,20 +285,56 @@ def maybe_escalate(file_path: str, ocr_result: dict) -> dict:
     backend = get_backend()
     if backend is None:
         return _with_warning(ocr_result, "escalation enabled but backend unavailable; keeping local extraction")
+
+    digest = _file_hash(file_path)
+    cached = _cache_get(digest)
+    if cached is not None:
+        merged, notes = merge(ocr_result, cached["fields"])
+        if notes:
+            merged["source"] = "ocr+cloud"
+            return _with_warning(merged, "escalation cache hit (no new cloud spend): " + "; ".join(notes))
+        return _with_warning(merged, "escalation cache hit (no new cloud spend)")
+
     pages = _count_pages(file_path)
     if _budget_exhausted(pages):
         return _with_warning(ocr_result, "escalation budget exhausted for this month (free tier); keeping local extraction")
+
+    send_path, total_pages, sent_pages = _select_send_path(file_path)
+    escalated = None
+    verified = False
+    tier = _tiers()[0]
     try:
-        escalated = backend.extract(file_path)
-    except BackendUnavailable as e:
-        return _with_warning(ocr_result, f"escalation unavailable ({e}); keeping local extraction")
-    except Exception as e:
-        return _with_warning(ocr_result, f"escalation failed ({e}); keeping local extraction")
-    _record_usage(pages)  # count what the cloud actually saw (success only)
+        for tier in _tiers():
+            try:
+                backend.extraction_mode = tier  # DatalabBackend reads it per call
+                attempt = backend.extract(send_path)
+            except BackendUnavailable as e:
+                return _with_warning(ocr_result, f"escalation unavailable ({e}); keeping local extraction")
+            except Exception as e:
+                return _with_warning(ocr_result, f"escalation failed ({e}); keeping local extraction")
+            _record_usage(sent_pages)  # each tier call bills its pages
+            escalated = attempt
+            if _verified(attempt):
+                verified = True
+                break
+    finally:
+        if send_path != file_path:
+            try:
+                os.remove(send_path)
+            except OSError:
+                pass
+    if escalated is None:
+        return ocr_result
+    _cache_put(digest, escalated, verified=verified)
     merged, notes = merge(ocr_result, escalated)
+    msgs: list[str] = []
+    if sent_pages < total_pages:
+        msgs.append(f"page-selective: sent {sent_pages}/{total_pages} pages")
     if notes:
-        # provenance must survive persistence: the Invoice.source column is
-        # its home (<=16 chars, FE badge renders non-'text' as OCR).
         merged["source"] = "ocr+cloud"
-        return _with_warning(merged, f"escalated via {backend.name}: " + "; ".join(notes))
-    return merged
+        msgs.append("; ".join(notes))
+    if verified:
+        msgs.append(f"escalated via {backend.name} (tier {tier}, verified)")
+    else:
+        msgs.append("escalation not verified; kept original on conflicts")
+    return _with_warning(merged, " | ".join(msgs)) if msgs else merged

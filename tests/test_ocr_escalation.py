@@ -473,6 +473,8 @@ def test_budget_records_usage_on_success(monkeypatch, tmp_path):
     monkeypatch.setenv("FFAA_OCR_ESCALATION", "datalab")
     monkeypatch.setenv("DATALAB_API_KEY", "test-key")
     monkeypatch.setenv("FFAA_OCR_ESCALATION_USAGE", str(tmp_path / "usage.json"))
+    monkeypatch.setenv("FFAA_OCR_ESCALATION_BUDGET", "100")
+    monkeypatch.setenv("FFAA_OCR_ESCALATION_CACHE", str(tmp_path / "cache.json"))
 
     class FakeBackend:
         name = "datalab-cloud"
@@ -482,7 +484,8 @@ def test_budget_records_usage_on_success(monkeypatch, tmp_path):
                     "igst": 0.0, "total_amount": 1180.0, "gst_rate": 18.0}
 
     monkeypatch.setattr(esc, "get_backend", lambda: FakeBackend())
-    monkeypatch.setattr(esc, "_count_pages", lambda p: 3)
+    # usage = pages actually BILLED = pages sent (the subset), not the doc total
+    monkeypatch.setattr(esc, "_select_send_path", lambda p: ("invoice.pdf", 3, 3))
     out = esc.maybe_escalate("invoice.pdf", _broken_fields())
     assert out["source"] == "ocr+cloud"
     month, pages = esc._read_usage()
@@ -496,6 +499,7 @@ def test_budget_unset_is_unlimited(monkeypatch, tmp_path):
     monkeypatch.setenv("DATALAB_API_KEY", "test-key")
     monkeypatch.delenv("FFAA_OCR_ESCALATION_BUDGET", raising=False)
     monkeypatch.setenv("FFAA_OCR_ESCALATION_USAGE", str(tmp_path / "usage.json"))
+    monkeypatch.setenv("FFAA_OCR_ESCALATION_CACHE", str(tmp_path / "cache.json"))
     esc._record_usage(999)  # usage tracked but no budget -> never blocks
 
     class FakeBackend:
@@ -508,3 +512,134 @@ def test_budget_unset_is_unlimited(monkeypatch, tmp_path):
     monkeypatch.setattr(esc, "get_backend", lambda: FakeBackend())
     out = esc.maybe_escalate("invoice.pdf", _broken_fields())
     assert out["source"] == "ocr+cloud"
+
+
+def test_cache_hit_skips_backend(monkeypatch, tmp_path):
+    # duplicate re-escalation skip: the same document bytes must never pay twice
+    import app.ocr_escalate as esc
+
+    monkeypatch.setenv("FFAA_OCR_ESCALATION", "datalab")
+    monkeypatch.setenv("DATALAB_API_KEY", "test-key")
+    monkeypatch.setenv("FFAA_OCR_ESCALATION_CACHE", str(tmp_path / "cache.json"))
+    calls = []
+
+    class FakeBackend:
+        name = "datalab-cloud"
+
+        def extract(self, path):
+            calls.append(path)
+            return {"taxable_value": 1000.0, "cgst": 90.0, "sgst": 90.0,
+                    "igst": 0.0, "total_amount": 1180.0, "gst_rate": 18.0}
+
+    monkeypatch.setattr(esc, "get_backend", lambda: FakeBackend())
+    pdf = _mk_pdf(tmp_path)
+    esc.maybe_escalate(pdf, _broken_fields())
+    second = esc.maybe_escalate(pdf, _broken_fields())
+    assert len(calls) == 1, "second call must come from cache, not the cloud"
+    assert second["total_amount"] == 1180.0
+    assert any("cache" in w.lower() for w in second.get("warnings", []))
+
+
+def test_page_selection_sends_only_weak_pages(monkeypatch, tmp_path):
+    # page-selective escalation: bill only pages the local cascade failed at
+    import app.ocr_escalate as esc
+    import fitz
+
+    doc = fitz.open()
+    p1 = doc.new_page()
+    for i in range(20):  # single unwrapped lines clip -> page would read weak
+        p1.insert_text((72, 72 + i * 14), f"supply of goods and services line {i:02d}")
+    doc.new_page()  # near-empty page 2 = suspect (scanned)
+    pdf = str(tmp_path / "two.pdf")
+    doc.save(pdf)
+    doc.close()
+
+    received = []
+
+    class FakeBackend:
+        name = "datalab-cloud"
+
+        def extract(self, path):
+            with fitz.open(path) as d:
+                received.append(d.page_count)
+            return {"total_amount": 1180.0, "taxable_value": 1000.0,
+                    "cgst": 90.0, "sgst": 90.0, "igst": 0.0, "gst_rate": 18.0}
+
+    monkeypatch.setenv("FFAA_OCR_ESCALATION", "datalab")
+    monkeypatch.setenv("DATALAB_API_KEY", "test-key")
+    monkeypatch.setattr(esc, "get_backend", lambda: FakeBackend())
+    esc.maybe_escalate(pdf, _broken_fields())
+    assert received == [1], "only the weak page should be sent/billed"
+
+
+def test_ladder_ascends_only_when_verification_fails(monkeypatch, tmp_path):
+    # the agentic core: next (pricier) tier is attempted ONLY on failed verify
+    import app.ocr_escalate as esc
+
+    modes = []
+
+    class FakeBackend:
+        name = "datalab-cloud"
+
+        def extract(self, path):
+            modes.append(getattr(self, "extraction_mode", "?"))
+            if modes[-1] == "fast":
+                return {"total_amount": 999.0}  # not gateable -> unverified
+            return {"taxable_value": 1000.0, "cgst": 90.0, "sgst": 90.0,
+                    "igst": 0.0, "total_amount": 1180.0, "gst_rate": 18.0}
+
+    monkeypatch.setenv("FFAA_OCR_ESCALATION", "datalab")
+    monkeypatch.setenv("DATALAB_API_KEY", "test-key")
+    monkeypatch.setenv("FFAA_OCR_ESCALATION_TIERS", "fast,balanced")
+    monkeypatch.setenv("FFAA_OCR_ESCALATION_CACHE", str(tmp_path / "cache.json"))
+    monkeypatch.setattr(esc, "get_backend", lambda: FakeBackend())
+    out = esc.maybe_escalate(_mk_pdf(tmp_path), _broken_fields())
+    assert modes == ["fast", "balanced"]
+    assert out["total_amount"] == 1180.0
+    assert out["source"] == "ocr+cloud"
+
+
+def test_ladder_stops_when_verified(monkeypatch, tmp_path):
+    import app.ocr_escalate as esc
+
+    modes = []
+
+    class FakeBackend:
+        name = "datalab-cloud"
+
+        def extract(self, path):
+            modes.append(getattr(self, "extraction_mode", "?"))
+            return {"taxable_value": 1000.0, "cgst": 90.0, "sgst": 90.0,
+                    "igst": 0.0, "total_amount": 1180.0, "gst_rate": 18.0}
+
+    monkeypatch.setenv("FFAA_OCR_ESCALATION", "datalab")
+    monkeypatch.setenv("DATALAB_API_KEY", "test-key")
+    monkeypatch.setenv("FFAA_OCR_ESCALATION_TIERS", "fast,balanced")
+    monkeypatch.setenv("FFAA_OCR_ESCALATION_CACHE", str(tmp_path / "cache.json"))
+    monkeypatch.setattr(esc, "get_backend", lambda: FakeBackend())
+    esc.maybe_escalate(_mk_pdf(tmp_path), _broken_fields())
+    assert modes == ["fast"], "verified on the cheap tier — no pricier call"
+
+
+def test_default_single_tier_no_ascent(monkeypatch, tmp_path):
+    # tiers unset: exactly ONE attempt even when unverified (cost parity)
+    import app.ocr_escalate as esc
+
+    modes = []
+
+    class FakeBackend:
+        name = "datalab-cloud"
+
+        def extract(self, path):
+            modes.append(getattr(self, "extraction_mode", "?"))
+            return {"total_amount": 999.0}  # unverifyable
+
+    monkeypatch.setenv("FFAA_OCR_ESCALATION", "datalab")
+    monkeypatch.setenv("DATALAB_API_KEY", "test-key")
+    monkeypatch.delenv("FFAA_OCR_ESCALATION_TIERS", raising=False)
+    monkeypatch.setenv("FFAA_OCR_ESCALATION_CACHE", str(tmp_path / "cache.json"))
+    monkeypatch.setattr(esc, "get_backend", lambda: FakeBackend())
+    out = esc.maybe_escalate(_mk_pdf(tmp_path), _broken_fields())
+    assert modes == ["fast"]
+    assert out["total_amount"] != 1180.0  # local fields kept (fail-open)
+    assert any("not verified" in w for w in out.get("warnings", []))
