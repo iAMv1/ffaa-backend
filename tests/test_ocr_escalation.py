@@ -418,6 +418,8 @@ def test_maybe_escalate_broken_merges_and_records_provenance(monkeypatch):
     assert out["total_amount"] == 1180.0
     # original hsn was non-empty → conflict keeps the original (auditable)
     assert out["hsn_code"] == "9983"
+    # provenance must survive persistence via the source column
+    assert out["source"] == "ocr+cloud"
     warnings = " ".join(out.get("warnings", []))
     assert "datalab-cloud" in warnings
     assert "conflict hsn_code" in warnings

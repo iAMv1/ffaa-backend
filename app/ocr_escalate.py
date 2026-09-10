@@ -260,11 +260,14 @@ def maybe_escalate(file_path: str, ocr_result: dict) -> dict:
         return _with_warning(ocr_result, "escalation enabled but backend unavailable; keeping local extraction")
     try:
         escalated = backend.extract(file_path)
-    except Exception as e:  # fail-open — never lose the local extraction
-        return _with_warning(
-            ocr_result, f"escalation failed ({type(e).__name__}: {e}); keeping local extraction"
-        )
+    except BackendUnavailable as e:
+        return _with_warning(ocr_result, f"escalation unavailable ({e}); keeping local extraction")
+    except Exception as e:
+        return _with_warning(ocr_result, f"escalation failed ({e}); keeping local extraction")
     merged, notes = merge(ocr_result, escalated)
     if notes:
+        # provenance must survive persistence: the Invoice.source column is
+        # its home (<=16 chars, FE badge renders non-'text' as OCR).
+        merged["source"] = "ocr+cloud"
         return _with_warning(merged, f"escalated via {backend.name}: " + "; ".join(notes))
     return merged
