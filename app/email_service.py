@@ -2,7 +2,6 @@ import os
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from string import Template
 
 # ponytail: env only, no Settings class
 SMTP_HOST = os.getenv("SMTP_HOST", "")
