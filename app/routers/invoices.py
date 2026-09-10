@@ -11,6 +11,7 @@ from ..ocr import process_invoice_document
 from ..folders import archive_file, safe_unlink
 from ..audit import audit_invoice
 from ..services import scan_and_flag_duplicates
+from ..ocr_escalate import maybe_escalate
 from ..tenancy import get_owned_client, require_entitlement
 from ..users import current_active_user
 
@@ -105,6 +106,9 @@ def _save_invoice(
     # still removes the staging file (no unbounded uploads/ growth).
     try:
         ocr_result = process_invoice_document(file_path)
+        # Agentic boundary: judge may escalate to a stronger backend
+        # (Datalab cloud) when the local cascade is not trustworthy.
+        ocr_result = maybe_escalate(file_path, ocr_result)
 
         client = None
         if client_id is not None:
