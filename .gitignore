@@ -1,19 +1,21 @@
-__pycache__/
-*.pyc
-.pytest_cache/
-.env
-*.db
-uploads/
-data/
-test_data/
-.venv/
-venv/
-dist/
-*.egg-info/
-openapi.json
 
-# bench: keep tools + progress + fixtures; generated logs/datasets/results stay local
-bench/*
 !bench/*.py
 !bench/PROGRESS.md
 !bench/fixtures
+# bench: keep tools + progress + fixtures; generated logs/datasets/results stay local
+*.db
+*.egg-info/
+*.pyc
+.env
+.pytest_cache/
+.venv/
+__pycache__/
+bench/*
+data/
+dist/
+logs/
+openapi.json
+state/
+test_data/
+uploads/
+venv/
