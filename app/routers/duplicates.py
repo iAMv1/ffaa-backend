@@ -3,20 +3,12 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 
 from .. import models, schemas
-from ..database import SessionLocal
+from ..database import get_db
 from ..services import scan_and_flag_duplicates
 from ..tenancy import require_entitlement
 from ..users import current_active_user
 
 router = APIRouter()
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 @router.post("/invoices/{invoice_id}/duplicates/check", response_model=schemas.DuplicateScanResult)

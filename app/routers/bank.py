@@ -6,7 +6,7 @@ from datetime import datetime
 import os
 
 from .. import models, schemas
-from ..database import SessionLocal
+from ..database import get_db
 from ..bank_parse import parse_bank_file
 from ..reconcile import best_matches
 from ..folders import archive_file, safe_unlink
@@ -16,14 +16,6 @@ from ..users import current_active_user
 logger = logging.getLogger("ffaa.bank")
 
 router = APIRouter()
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 @router.post("/bank-statements/upload")

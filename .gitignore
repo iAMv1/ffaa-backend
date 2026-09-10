@@ -10,3 +10,10 @@ test_data/
 venv/
 dist/
 *.egg-info/
+openapi.json
+
+# bench: keep tools + progress + fixtures; generated logs/datasets/results stay local
+bench/*
+!bench/*.py
+!bench/PROGRESS.md
+!bench/fixtures

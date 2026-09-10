@@ -4,19 +4,13 @@ from datetime import datetime
 from fastapi.responses import FileResponse
 
 from .. import models, schemas
-from ..database import SessionLocal
+from ..database import get_db
 from ..folders import list_client_folders, resolve_file_path, safe_unlink
 from ..tenancy import get_owned_client, require_entitlement
 from ..users import current_active_user
 
 router = APIRouter()
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 @router.post("/clients", response_model=schemas.ClientOut)
 def create_client(

@@ -3,19 +3,11 @@ from fastapi.responses import Response
 from sqlalchemy.orm import Session, joinedload
 
 from .. import models
-from ..database import SessionLocal
+from ..database import get_db
 from ..tally import invoices_to_tally_xml
 from ..users import current_active_user
 
 router = APIRouter()
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 @router.get("/export-tally")

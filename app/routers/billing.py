@@ -16,19 +16,11 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from .. import billing, models
-from ..billing import GRACE_DAYS
-from ..database import SessionLocal
+from ..billing import GRACE_DAYS, _parse_rzp_ts
+from ..database import get_db
 from ..users import current_active_user
 
 router = APIRouter()
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 def _razorpay_keys() -> tuple[str, str] | None:
@@ -362,16 +354,6 @@ def verify_payment(
 
 def _entity(event: dict, key: str) -> dict:
     return event.get("payload", {}).get(key, {}).get("entity", {}) or {}
-
-
-def _parse_rzp_ts(value) -> datetime | None:
-    """RZP timestamps are unix seconds."""
-    if value in (None, ""):
-        return None
-    try:
-        return datetime.fromtimestamp(int(value))
-    except (TypeError, ValueError, OSError):
-        return None
 
 
 def _resolve_user_id(db: Session, sub_entity: dict) -> int | None:

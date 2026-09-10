@@ -4,20 +4,12 @@ from sqlalchemy import func
 from datetime import datetime, timedelta
 
 from .. import models, schemas
-from ..database import SessionLocal
+from ..database import get_db
 from ..services import attempt_reminder, missing_docs, render_reminder
 from ..tenancy import get_owned_client, require_entitlement
 from ..users import current_active_user
 
 router = APIRouter()
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 @router.get("/reminders/preview")

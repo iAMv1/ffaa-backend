@@ -1,5 +1,0 @@
-Traceback (most recent call last):
-  File "C:\Users\ItzP\ffaa\ffaa-backend\bench\testing\cache_kirana.py", line 9, in <module>
-    from rapid_engine import extract_text_and_items  # noqa: E402
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-ModuleNotFoundError: No module named 'rapid_engine'

@@ -5,9 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session, joinedload
 from datetime import datetime
 import os
-import shutil
 from .. import models, schemas
-from ..database import SessionLocal
+from ..database import get_db
 from ..ocr import process_invoice_document
 from ..folders import archive_file, safe_unlink
 from ..audit import audit_invoice
@@ -34,12 +33,6 @@ logger = logging.getLogger("ffaa.invoices")
 
 router = APIRouter()
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 # Day-first precedence is deliberate: Indian invoices dominate the corpus.
 # Single source of truth for invoice date parsing — parsers return strings,

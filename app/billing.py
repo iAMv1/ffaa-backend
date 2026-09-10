@@ -17,6 +17,16 @@ from .database import SessionLocal
 PERIOD_DAYS = 30
 GRACE_DAYS = 7
 
+
+def _parse_rzp_ts(value) -> datetime | None:
+    """RZP timestamps are unix seconds (single canonical parser)."""
+    if value in (None, ""):
+        return None
+    try:
+        return datetime.fromtimestamp(int(value))
+    except (TypeError, ValueError, OSError):
+        return None
+
 # Local-only values stored in billing_subscriptions.rzp_status beside the
 # mirrored Razorpay states. They are COMPUTED locally (nightly reconciliation
 # sets `lapsed` when grace expires; an open dispute sets `disputed`). Per the

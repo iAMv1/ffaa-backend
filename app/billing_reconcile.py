@@ -38,16 +38,6 @@ except ImportError:  # SDK absent — remote steps cannot run anyway
     _RZP_ERRORS = (Exception,)
 
 
-def _remote_period_end(entity: dict) -> datetime | None:
-    raw = entity.get("current_end")
-    if raw in (None, ""):
-        return None
-    try:
-        return datetime.fromtimestamp(int(raw))
-    except (TypeError, ValueError, OSError):
-        return None
-
-
 def _heal_remote_drift(db, client, dry_run: bool) -> dict:
     counts = {"checked": 0, "repaired": 0}
     if client is None:
@@ -77,7 +67,7 @@ def _heal_remote_drift(db, client, dry_run: bool) -> dict:
         remote_status = billing.RZP_STATUS_MAP.get(
             remote.get("status"), remote.get("status")
         )
-        remote_end = _remote_period_end(remote)
+        remote_end = billing._parse_rzp_ts(remote.get("current_end"))
         drifted = (
             sub.rzp_status not in billing.LOCAL_STATUS_EXTENSIONS
             and (
@@ -123,7 +113,7 @@ def _heal_remote_drift(db, client, dry_run: bool) -> dict:
                     payment_id=payment_id,
                     order_id=inv.get("order_id"),
                     amount_rupees=amount_paise // 100,
-                    period_end=_remote_period_end(remote),
+                    period_end=billing._parse_rzp_ts(remote.get("current_end")),
                 )
                 counts["repaired"] += 1
     if not dry_run:

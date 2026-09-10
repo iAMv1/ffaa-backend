@@ -157,14 +157,7 @@ class UploadFileResult(BaseModel):
     error: Optional[str] = None
 
 
-class ReminderTemplate(BaseModel):
-    name: str
-    subject: str
-    body: str
-
-
 class ReminderSend(BaseModel):
-    template_name: Optional[str] = None
     custom_message: Optional[str] = None
     days: Optional[int] = 30
     send: bool = True
