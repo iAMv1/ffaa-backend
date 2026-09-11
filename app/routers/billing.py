@@ -572,7 +572,17 @@ async def webhook(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Invalid webhook signature")
 
     event = json.loads(raw)
-    event_id = event.get("id") or ""
+    # Event identity: Razorpay delivers the id in the X-Razorpay-Event-Id
+    # header (real payloads carry no top-level id). Fall back to a
+    # deterministic composite so distinct id-less deliveries never collide
+    # on "" (which used to drop every event after the first — live E2E bug).
+    sub_e = _entity(event, "subscription")
+    pay_e = _entity(event, "payment")
+    event_id = (
+        request.headers.get("x-razorpay-event-id")
+        or event.get("id")
+        or f"{event.get('event')}|{(sub_e or {}).get('id') or ''}|{(pay_e or {}).get('id') or ''}"
+    )[:100]
     handler = WEBHOOK_HANDLERS.get(event.get("event"))
 
     # Replay guard: insert the event id FIRST; UNIQUE violation → duplicate

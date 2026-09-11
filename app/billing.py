@@ -126,6 +126,7 @@ def ensure_rzp_plan(db, plan: models.BillingPlan) -> str | None:
         return None
     rzp_plan = client.plan.create({
         "period": "monthly",
+        "interval": 1,  # Razorpay rejects plan creation without it (live E2E caught this)
         "item": {
             "name": f"FFAA {plan.name}",
             "amount": plan.price_rupees * 100,  # paise
