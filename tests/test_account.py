@@ -121,3 +121,48 @@ def test_account_requires_auth(anon_client):
         json={"new_password": "whatever123", "current_password": TEST_PASSWORD},
     )
     assert r.status_code == 401
+
+
+# --- forgot-password email delivery (was a silent no-op: token generated, never sent) ---
+
+
+def test_forgot_password_sends_email_with_reset_link(anon_client, monkeypatch):
+    import app.users as users_mod
+
+    captured = []
+    monkeypatch.setattr(
+        users_mod, "send_email",
+        lambda to, subject, body: captured.append((to, subject, body)),
+    )
+    email = f"fp-{uuid.uuid4().hex[:8]}@example.com"
+    _register_and_login(anon_client, email, TEST_PASSWORD)
+    r = anon_client.post("/api/v1/auth/forgot-password", json={"email": email})
+    assert r.status_code == 202, r.text
+    assert len(captured) == 1, "reset email must actually be sent"
+    to, subject, body = captured[0]
+    assert to == email
+    assert "/reset-password?token=" in body, "email must carry the reset link"
+    # 202 response must leak nothing (no token, no enumeration hints)
+    assert "token" not in r.text.lower()
+
+
+def test_forgot_password_without_smtp_still_202(anon_client, monkeypatch, caplog):
+    # SMTP unconfigured -> the pinned 202 contract holds (no user enumeration,
+    # no 500); the operator learns about it from the error log instead.
+    import app.email_service as es
+    import app.users as users_mod
+
+    monkeypatch.setattr(es, "SMTP_HOST", "")
+    monkeypatch.setattr(es, "SMTP_USER", "")
+    monkeypatch.setattr(es, "SMTP_PASS", "")
+    sent = []
+    monkeypatch.setattr(
+        users_mod, "send_email",
+        lambda to, subject, body: sent.append(1) or (_ for _ in ()).throw(RuntimeError("SMTP not configured")),
+    )
+    email = f"fp2-{uuid.uuid4().hex[:8]}@example.com"
+    _register_and_login(anon_client, email, TEST_PASSWORD)
+    r = anon_client.post("/api/v1/auth/forgot-password", json={"email": email})
+    assert r.status_code == 202, r.text
+    assert len(sent) == 1, "the send must have been ATTEMPTED"
+    assert any("reset email" in m.lower() for m in caplog.messages), "operator must see the failure in logs"

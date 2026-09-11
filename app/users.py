@@ -10,6 +10,7 @@ Sessions are versioned JWTs (cookie ffaaauth): claims carry tv=token_version;
 any password/email change bumps the column and every outstanding cookie dies
 on next request (401).
 """
+import logging
 import os
 from datetime import datetime
 
@@ -34,6 +35,7 @@ from sqlalchemy.orm import Session
 
 from .database import SessionLocal
 from pydantic import BaseModel, EmailStr
+from .email_service import send_email
 from .models import OAuthAccount, User
 
 # FFAA_SECRET is REQUIRED outside explicit dev mode (FFAA_DEV=1): a known
@@ -178,6 +180,26 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
         if int(data.get("tv", 0)) != int(user.token_version or 0):
             raise fu_exc.InvalidResetPasswordToken()
         return await super().reset_password(token, password, request)
+
+    async def on_after_forgot_password(self, user: User, token: str, request: Request | None = None) -> None:
+        """Send the reset link. The endpoint keeps its 202 contract even when
+        SMTP is unconfigured/failed (no user enumeration, no 500) — the real
+        failure is logged loudly for the operator instead."""
+        base = os.environ.get("FFAA_PUBLIC_URL", "http://localhost:5173")
+        link = f"{base.rstrip('/')}/reset-password?token={token}"
+        try:
+            send_email(
+                user.email,
+                "Reset your ParchAI password",
+                "We received a request to reset your ParchAI password.\n\n"
+                f"Reset it here (link valid for 1 hour):\n{link}\n\n"
+                "If you didn't request this, ignore this email — your password stays unchanged.\n",
+            )
+        except Exception as e:
+            logging.getLogger(__name__).error(
+                "password reset email FAILED for user %s: %s", user.id, e
+            )
+
 
     async def on_after_reset_password(self, user: User, request: Request | None = None) -> None:
         # Rotation bumps the version → every session cookie dies (design D1).
