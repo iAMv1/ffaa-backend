@@ -31,7 +31,7 @@ from app.billing import seed_plans  # noqa: E402
 from app.billing_reconcile import run_reconcile  # noqa: E402
 from app.database import SessionLocal, engine  # noqa: E402
 from app.main import app  # noqa: E402
-from app import models  # noqa: E402
+from app import billing, models  # noqa: E402
 
 TEST_PASSWORD = "T3st-Passw0rd!"
 KEY_ID = "rzp_test_XXXXXXXX"
@@ -54,6 +54,16 @@ def clean_db():
     seed_plans()
     yield
     models.Base.metadata.drop_all(bind=engine)
+
+
+@pytest.fixture(autouse=True)
+def _no_ambient_razorpay(monkeypatch):
+    """Keyless baseline for EVERY test. The operator's backend/.env now
+    carries real test keys and load_dotenv() re-adds them after this
+    module's import-time pops — so pops alone can't guarantee keyless.
+    Tests that need keys set them explicitly (fake_sdk, signed_webhooks)."""
+    for _k in ("RAZORPAY_KEY_ID", "RAZORPAY_KEY_SECRET", "RAZORPAY_WEBHOOK_SECRET"):
+        monkeypatch.delenv(_k, raising=False)
 
 
 @pytest.fixture(autouse=True)
@@ -1027,3 +1037,74 @@ def test_reconcile_lapses_past_due_beyond_grace():
         assert summary["lapsed"] == 1
     finally:
         db2.close()
+
+
+# --- ensure_rzp_plan payload regression (live Razorpay E2E 2026-09-11) ------------
+# Razorpay answers 400 "The interval field is required" without `interval`;
+# the subscribe path swallows that as "payments not configured". These pin
+# the outgoing payload and the skip paths so the bug can't return.
+
+
+def test_plan_create_payload_has_interval(fake_sdk):
+    client = fake_sdk()
+    c, uid = _authed_client()
+    r = c.post("/api/v1/billing/subscriptions", json={"plan_code": "pro"})
+    assert r.status_code == 200, r.text
+    assert r.json()["subscription_id"].startswith("sub_fake") or r.json()["subscription_id"].startswith("sub_")
+    assert len(client.plan.calls) == 1, "plan created exactly once (idempotent cache)"
+    params = client.plan.calls[0]
+    assert params["period"] == "monthly"
+    assert params["interval"] == 1  # REQUIRED by Razorpay — regression guard
+    assert params["item"]["name"].startswith("FFAA ")
+    assert params["item"]["amount"] == 499 * 100  # paise
+    assert params["item"]["currency"] == "INR"
+
+
+def test_ensure_rzp_plan_skips_free_and_cached(fake_sdk):
+    fake_sdk()  # env keys set, but the routes below must never call plan.create
+    db = SessionLocal()
+    try:
+        free = models.BillingPlan(code="free2", name="Free2", price_rupees=0)
+        cached = models.BillingPlan(
+            code="pro2", name="Pro2", price_rupees=499, rzp_plan_id="plan_cached"
+        )
+        db.add_all([free, cached])
+        db.commit()
+        assert billing.ensure_rzp_plan(db, free) is None  # free: no RZP plan
+        assert billing.ensure_rzp_plan(db, cached) == "plan_cached"  # cache hit
+    finally:
+        db.close()
+
+
+def test_distinct_ideless_events_both_process(signed_webhooks):
+    """Regression (live Razorpay E2E 2026-09-11): real Razorpay payloads carry
+    NO top-level id — every event used to share event_id "" so the replay
+    guard silently dropped everything after the first delivery. Distinct
+    id-less, header-less deliveries must each process."""
+    c, uid = _authed_client()
+    db = SessionLocal()
+    try:
+        sub = _mk_sub(db, uid, rzp_status="created", current_period_end=None)
+        sid = sub.rzp_subscription_id
+    finally:
+        db.close()
+
+    sub_e = _sub_entity(sub_id=sid, status="active")
+    raw1 = _event("subscription.activated", sub_e, event_id="")
+    assert _post_webhook(raw1).status_code == 200
+    db = SessionLocal()
+    try:
+        assert db.query(models.BillingSubscription).filter_by(
+            rzp_subscription_id=sid).one().rzp_status == "active"
+    finally:
+        db.close()
+
+    pay_e = _payment_entity(payment_id="pay_second")
+    raw2 = _event("subscription.charged", sub_e, pay_e, event_id="")
+    assert _post_webhook(raw2).status_code == 200  # must NOT be replay-blocked
+    db = SessionLocal(); db.expire_all()
+    try:
+        assert db.query(models.BillingPayment).filter_by(
+            razorpay_payment_id="pay_second").count() == 1
+    finally:
+        db.close()
