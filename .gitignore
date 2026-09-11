@@ -7,6 +7,8 @@
 *.egg-info/
 *.pyc
 .env
+.escalation_cache.json
+.escalation_usage.json
 .pytest_cache/
 .venv/
 __pycache__/
